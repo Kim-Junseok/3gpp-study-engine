@@ -47,3 +47,6 @@ The read sequence canonical (1,618) â†’ historical `2025-09-03_10h00` (1,454) â†
 ## Spreadsheet formats
 
 Current inspected RAN1/RAN2 files are OOXML XLSX and are read with `openpyxl`. Legacy binary XLS is read with `xlrd`. The parser scans sheets and the first 25 rows for recognized aliases, stops after a bounded empty tail, reports unmapped rows/unknown columns, and never invents absent fields.
+# Selective body retrieval and safety
+
+Only explicit fetch plans may retrieve TDoc bodies. `DOWNLOADABLE` requires an existing official metadata URL. `LISTED_ONLY` remains metadata evidence and reports that its body is unavailable; `UNKNOWN` fails safely. ZIP members are read in memory, absolute/traversal paths are rejected, individual expansion defaults to 50 MB and total expansion to 200 MB, and embedded files/macros are never executed. OCR is out of scope.

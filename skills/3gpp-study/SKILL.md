@@ -1,6 +1,6 @@
 ---
 name: 3gpp-study
-description: Build a provenance-aware, metadata-only candidate inventory for a 3GPP RAN1/RAN2 research request using the repository's StudyRequest and Python core. Use for selecting meetings and candidate TDocs; not for document-body or agreement analysis.
+description: Build provenance-aware 3GPP RAN1/RAN2 candidate inventories and, only when explicitly requested, plan, fetch, and structurally normalize selected official TDocs through the Python core. Use for meeting/TDoc selection and factual extraction outcomes; not for proposal, agreement, or company-position analysis.
 ---
 
 # 3GPP Study
@@ -16,4 +16,11 @@ Use the Python core as the source of truth. The CLI is a thin operational interf
 
 Use only the Python core's current normalized view and match evidence. Do not independently rescore candidates. Keep list-only records in results and distinguish meeting-close from current-consolidated snapshot coverage. If the user explicitly requests a meeting-close or exact stored snapshot, pass `--view meeting-close` or `--snapshot-url`; report its URL, checksum, role, timestamp, and request-selected status, then explicitly confirm that canonical current was not modified. Do not treat the selection as a persistent role or default.
 
-Always label the result as official-metadata-only candidate discovery. State that V0.2a.3 has not read document bodies and cannot determine technical proposals, agreements, conclusions, company positions, or support/opposition. Never promote metadata labels or company authorship into those claims.
+If the user explicitly asks to download and prepare candidates:
+
+1. Run `threegpp plan-fetch --request <request.yaml> --minimum-match high --output <plan.yaml>` and show the exact plan before retrieval.
+2. Confirm the set is bounded and contains only `DOWNLOADABLE` records. Never invent URLs for listed-only records.
+3. Run `threegpp fetch-tdocs --plan <plan.yaml>` only after the explicit action is clear.
+4. Report counts for parsed, partial, unsupported, text-unavailable, and failed outcomes. Report structural/provenance facts only.
+
+Ordinary `study-inventory` never downloads TDoc bodies. Never independently parse paths or rescore records when the core API supplies the result. Never infer technical proposals, agreements, conclusions, company positions, or support/opposition from extracted text.

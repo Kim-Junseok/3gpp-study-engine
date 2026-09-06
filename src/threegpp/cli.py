@@ -9,6 +9,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from threegpp.db import MetadataRepository
+from threegpp.documents import DocumentService, FetchPlanner
+from threegpp.documents.models import TDocFetchPlan
 from threegpp.ingest import HTTPDownloader, ManifestStore, MeetingIngestor
 from threegpp.models import (
     SnapshotRole,
@@ -20,14 +22,15 @@ from threegpp.models import (
 from threegpp.normalize import select_snapshot_views
 from threegpp.sources import RAN1Source, RAN2Source, SourceError, ThreeGPPSource
 from threegpp.study import StudyService
+from threegpp.storage import data_root
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="threegpp", description="Inspect and ingest public 3GPP meeting metadata"
     )
-    parser.add_argument("--db", type=Path, default=Path("data/metadata.duckdb"))
-    parser.add_argument("--data-dir", type=Path, default=Path("data"))
+    parser.add_argument("--db", type=Path, default=data_root() / "metadata.duckdb")
+    parser.add_argument("--data-dir", type=Path, default=data_root())
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_meetings = subparsers.add_parser("list-meetings", help="list advertised meetings")
@@ -75,6 +78,29 @@ def build_parser() -> argparse.ArgumentParser:
         "migrate-manifest", help="externalize embedded legacy rows into normalized JSONL.gz"
     )
     migrate.add_argument("--manifest", required=True, type=Path)
+
+    plan_fetch = subparsers.add_parser(
+        "plan-fetch", help="write an inspectable TDoc body fetch plan"
+    )
+    plan_fetch.add_argument("--request", required=True, type=Path)
+    plan_fetch.add_argument(
+        "--minimum-match", choices=["high", "medium", "low"], default="high"
+    )
+    plan_fetch.add_argument("--organization", action="append")
+    plan_fetch.add_argument("--output", required=True, type=Path)
+    plan_fetch.add_argument("--batch-limit", type=int, default=50)
+
+    fetch = subparsers.add_parser(
+        "fetch-tdocs", help="explicitly fetch and normalize only a saved plan"
+    )
+    fetch.add_argument("--plan", required=True, type=Path)
+
+    inspect_doc = subparsers.add_parser(
+        "inspect-document", help="retrieve a locally normalized TDoc"
+    )
+    inspect_doc.add_argument("--tdoc", required=True)
+    inspect_doc.add_argument("--wg", choices=[item.value for item in WorkingGroup])
+    inspect_doc.add_argument("--meeting")
     return parser
 
 
@@ -101,6 +127,57 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "plan-fetch":
+        from threegpp.models import MatchLevel
+
+        request = StudyRequest.from_yaml(args.request)
+        with MetadataRepository(args.db) as repository:
+            inventory = StudyService(repository).candidate_inventory(request)
+            plan = FetchPlanner(repository, batch_limit=args.batch_limit).from_inventory(
+                inventory,
+                minimum_match=MatchLevel(args.minimum_match),
+                organizations=args.organization,
+            )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        plan.to_yaml(args.output)
+        _json(
+            {
+                "plan": str(args.output),
+                "pre_download": True,
+                "selected": len(plan.items),
+                "items": [item.model_dump(mode="json") for item in plan.items],
+            }
+        )
+        return 0
+
+    if args.command == "fetch-tdocs":
+        plan = TDocFetchPlan.from_yaml(args.plan)
+        with MetadataRepository(args.db) as repository:
+            service = DocumentService(repository, args.data_dir)
+            preflight = service.preflight(plan)
+            outcomes = service.execute(plan)
+            _json(
+                {
+                    "preflight": preflight,
+                    "outcomes": [item.model_dump(mode="json") for item in outcomes],
+                }
+            )
+        return 0
+
+    if args.command == "inspect-document":
+        with MetadataRepository(args.db) as repository:
+            metadata, receipt, blocks, text = DocumentService(
+                repository, args.data_dir
+            ).retrieve(args.tdoc, args.wg, args.meeting)
+            _json(
+                {
+                    "metadata": metadata.model_dump(mode="json") if metadata else None,
+                    "receipt": receipt.model_dump(mode="json"),
+                    "blocks": blocks,
+                    "normalized_text": text,
+                }
+            )
+        return 0
     if args.command == "list-tdocs":
         group = WorkingGroup.parse(args.wg)
         query = TDocQuery(

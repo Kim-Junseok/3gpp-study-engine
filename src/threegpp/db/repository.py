@@ -46,6 +46,42 @@ class MetadataRepository:
     def close(self) -> None:
         self.connection.close()
 
+    def upsert_document_receipt(self, receipt: object) -> None:
+        from threegpp.documents.models import DocumentReceipt
+        value = DocumentReceipt.model_validate(receipt)
+        self.connection.execute(
+            """INSERT OR REPLACE INTO tdoc_documents (
+                tdoc_id, working_group, meeting_number, fetched, normalized,
+                extraction_status, raw_path, normalized_path, raw_checksum,
+                normalized_checksum, text_checksum, normalization_identity_json,
+                normalized_schema_version, retention_state, receipt_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [value.tdoc_id, value.working_group.value, value.meeting, True,
+             value.normalized_path is not None, value.extraction_status.value,
+             str(value.raw.local_path), str(value.normalized_path) if value.normalized_path else None,
+             value.raw.sha256, value.normalized_checksum, value.text_checksum,
+             value.normalization_identity.model_dump_json() if value.normalization_identity else None,
+             value.normalization_identity.normalized_schema_version if value.normalization_identity else None,
+             value.raw.retention.value,
+             value.model_dump_json()],
+        )
+
+    def get_document_receipt(self, tdoc_id: str, working_group: object = None, meeting: str | None = None):
+        from threegpp.documents.models import DocumentReceipt
+        clauses, values = ["upper(tdoc_id) = upper(?)"], [tdoc_id]
+        if working_group is not None:
+            clauses.append("working_group = ?")
+            values.append(WorkingGroup.parse(working_group).value)
+        if meeting is not None:
+            clauses.append("meeting_number = ?")
+            values.append(normalize_meeting_identifier(meeting))
+        rows = self.connection.execute(
+            "SELECT receipt_json FROM tdoc_documents WHERE " + " AND ".join(clauses), values
+        ).fetchall()
+        if not rows: return None
+        if len(rows) > 1: raise ValueError("TDoc ID is ambiguous; provide working group and meeting")
+        return DocumentReceipt.model_validate_json(rows[0][0])
+
     def __enter__(self) -> MetadataRepository:
         return self
 

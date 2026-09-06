@@ -23,3 +23,8 @@ Each candidate reports its strongest topic match, level, combined per-field toke
 Request-scoped results identify the exact snapshot URL, checksum, base role, filename timestamp, and selection status, and state `canonical_current_modified=false`. Such reads never import snapshot records as current or rewrite normalized files/manifests.
 
 The Skill may coordinate this workflow, but `StudyRequest`, ingestion, parsing, filtering, and candidate selection remain Python-core responsibilities.
+# Selective document preparation
+
+After metadata candidate review, construct and inspect a fetch plan. Automatically generated plans include only downloadable candidates at or above the requested match level and default to 50 items maximum. Explicit identity selection is separate. Execution reports cached, downloadable, listed-only, and unknown counts, isolates ordinary per-document parser failures, and keeps provenance conflicts loud. Retrieve normalized blocks/text through `DocumentService.retrieve`; downstream callers must not infer filesystem paths.
+
+V0.2b ends at deterministic structural extraction. Semantic retrieval, proposal/agreement extraction, support/opposition classification, and company-position inference are future work.

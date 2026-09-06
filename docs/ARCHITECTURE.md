@@ -47,6 +47,10 @@ The repository separates canonical current rows from snapshot rows. A `current_v
 
 Runtime research data are operational state, not source code. Raw downloads, normalized live datasets, timestamped live manifests, and the local DuckDB database remain on disk but are excluded from Git history. Small deterministic fixtures under `tests/fixtures/` remain version-controlled because the validation suite depends on them. Repository hygiene must never delete local research evidence merely to remove it from Git tracking.
 
+## V0.2b document boundary
+
+`TDocFetchPlan` is the explicit safety boundary between metadata candidates and network retrieval. `DocumentService` validates availability, stores official bytes immutably, inspects packages without filesystem extraction, delegates formats to `DocumentParser`, writes portable gzip outputs, and indexes only receipts in DuckDB. Large text and block records never enter meeting manifests or DuckDB. Cache reuse requires exact raw-checksum, per-member parser, and normalized-schema identity plus valid checksums for both derived outputs. Parser or schema changes may rebuild derived output without changing raw evidence.
+
 ## Extensibility
 
 RAN1 and RAN2 share a directory adapter configured by group path, meeting prefix, and TDoc prefix. New working groups can implement `ThreeGPPSource` without changing ingestion, normalization, persistence, or study operations. Spreadsheet aliases are centralized and layout scanning is source-independent.

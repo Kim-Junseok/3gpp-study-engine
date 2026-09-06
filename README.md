@@ -4,7 +4,7 @@
 
 ## Milestone status
 
-**Current stable milestone: V0.2a.3. The metadata layer is accepted and frozen.**
+**Current development milestone: V0.2b.1. The accepted V0.2a.3 metadata layer remains frozen.**
 
 ```text
 3GPP meeting
@@ -16,7 +16,22 @@ snapshot-aware normalized metadata
 metadata-only candidate retrieval
 ```
 
-V0.2b is intentionally not implemented on this milestone branch. V0.2a.3 does not provide TDoc body extraction, semantic content analysis, proposal/agreement extraction, or company-trend analysis.
+V0.2b adds explicit, selective body fetch plans and deterministic structural normalization. It stops before semantic content analysis, proposal/agreement extraction, or company-trend analysis.
+
+```text
+Metadata discovery → candidate selection → fetch plan → immutable raw TDoc
+→ safe package inspection → parser → normalized blocks/text → local document index
+```
+
+Body retrieval is never triggered by `study-inventory`. Inspect a plan, then explicitly execute it:
+
+```bash
+threegpp plan-fetch --request studies/example.yaml --minimum-match high --output fetch-plan.yaml
+threegpp fetch-tdocs --plan fetch-plan.yaml
+threegpp inspect-document --tdoc R1-2600001 --wg RAN1 --meeting 125
+```
+
+Set `THREEGPP_DATA_ROOT=/another/disk/3gpp-data` to relocate runtime research storage; the fallback remains `./data`. Existing data are never moved automatically. Raw TDocs default to `CACHE`; `PINNED` marks evidence that must not be automatically pruned. This release does not implement pruning.
 
 ## Interface layering
 

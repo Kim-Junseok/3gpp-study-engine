@@ -78,6 +78,25 @@ CREATE TABLE IF NOT EXISTS tdoc_snapshot_records (
     tdoc_json VARCHAR NOT NULL,
     PRIMARY KEY (snapshot_url, tdoc_id)
 );
+
+CREATE TABLE IF NOT EXISTS tdoc_documents (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    fetched BOOLEAN NOT NULL,
+    normalized BOOLEAN NOT NULL,
+    extraction_status VARCHAR NOT NULL,
+    raw_path VARCHAR NOT NULL,
+    normalized_path VARCHAR,
+    raw_checksum VARCHAR NOT NULL,
+    normalized_checksum VARCHAR,
+    text_checksum VARCHAR,
+    normalization_identity_json VARCHAR,
+    normalized_schema_version VARCHAR,
+    retention_state VARCHAR NOT NULL,
+    receipt_json VARCHAR NOT NULL,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number)
+);
 """
 
 
@@ -142,6 +161,16 @@ def ensure_schema(connection: duckdb.DuckDBPyConnection) -> None:
         "UPDATE tdoc_metadata SET metadata_source_kind = 'directory' "
         "WHERE metadata_source_kind IS NULL"
     )
+
+    document_columns = _columns(connection, "tdoc_documents")
+    document_additions = {
+        "text_checksum": "VARCHAR",
+        "normalization_identity_json": "VARCHAR",
+        "normalized_schema_version": "VARCHAR",
+    }
+    for name, sql_type in document_additions.items():
+        if name not in document_columns:
+            connection.execute(f"ALTER TABLE tdoc_documents ADD COLUMN {name} {sql_type}")
 
 
 def _columns(connection: duckdb.DuckDBPyConnection, table: str) -> set[str]:

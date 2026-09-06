@@ -13,3 +13,6 @@ Snapshot roles express purpose, not a universal authority ordering. Meeting-clos
 List membership and archive availability are separate facts. `official_list_present` records a row in the selected official list; `directory_present` plus an archive URL records a downloadable TDoc. List-only rows, including withdrawn entries, remain queryable and are never silently discarded.
 
 Directory facts, official-list facts, document-content facts, and analytical inference must never be mixed silently. Authorship and status labels alone are not evidence of a meeting agreement.
+# Document evidence
+
+Downloaded bytes are official raw evidence and are never silently overwritten. `CACHE` is removable only by a future explicit retention workflow; `PINNED` must not be automatically pruned. No pruning is implemented. Normalized text is derived evidence and every receipt links it to the raw SHA-256, package member, parser/version, and stable block ID. Extracted wording is not itself classified as a proposal or meeting agreement in V0.2b.
