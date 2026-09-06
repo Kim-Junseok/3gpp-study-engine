@@ -1,0 +1,12 @@
+name: example-study
+
+working_groups:
+  - RAN1
+  - RAN2
+
+meetings:
+  RAN1: []
+  RAN2: []
+topics: []
+organizations: []
+questions: []

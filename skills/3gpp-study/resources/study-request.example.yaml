@@ -1,0 +1,32 @@
+name: 6g-ul-access
+
+working_groups:
+  - RAN1
+  - RAN2
+
+meetings:
+  RAN1:
+    - 124
+    - 124bis
+    - 125
+  RAN2:
+    - 133
+    - 133bis
+    - 134
+    - 135
+
+topics:
+  - contention-based uplink
+  - scheduled uplink
+  - scheduling request
+  - configured grant
+
+organizations:
+  - Nokia
+  - Ericsson
+  - Samsung
+  - Qualcomm
+
+questions:
+  - What problems with NR uplink access were identified?
+  - Which alternative mechanisms were proposed?

@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+build/
+*.log
+*.tmp
+*.part
+/*.zip
+/*.tar
+/*.tar.gz
+
+# Runtime data (keep directory placeholders)
+data/raw/*
+!data/raw/.gitkeep
+data/normalized/*
+!data/normalized/.gitkeep
+data/manifests/*
+!data/manifests/.gitkeep
+data/*.duckdb*
