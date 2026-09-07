@@ -7,7 +7,7 @@ from threegpp.models.evidence import DetectionBasis, DocumentRole, EvidenceKind
 
 
 EVIDENCE_SCHEMA_VERSION = "1"
-EXTRACTION_RULESET_VERSION = "explicit-structural-v1"
+EXTRACTION_RULESET_VERSION = "explicit-structural-v2"
 RULE_VERSION = "1"
 
 

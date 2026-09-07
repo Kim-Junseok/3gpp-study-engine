@@ -96,4 +96,7 @@ documents. Queries validate metadata identity, normalization identity/checksum,
 rule/schema versions, derived checksum, and every referenced block/span. Invalid
 sets become stale and cannot return evidence. Extraction and querying are offline.
 The semantic evidence schema is version `1`; the centralized extraction ruleset
-is `explicit-structural-v1`, with stable individual rule IDs at version `1`.
+is `explicit-structural-v2`, with stable individual rule IDs at version `1`.
+Meeting-record authority is member-scoped: normalized document/PDF members may
+emit meeting evidence, while bundled participant and TDoc-list spreadsheets remain
+searchable normalized data but cannot inherit meeting-report semantic authority.

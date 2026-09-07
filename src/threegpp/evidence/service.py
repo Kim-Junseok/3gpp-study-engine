@@ -38,6 +38,7 @@ from .rules import (
 
 _INDEXABLE = {ExtractionStatus.PARSED, ExtractionStatus.PARTIALLY_PARSED}
 _SEMANTIC_WORD = re.compile(r"\b(proposal|observation|agreement|conclusion|decision|ffs)\b", re.I)
+_MEETING_RECORD_SUFFIXES = frozenset({".doc", ".docx", ".pdf"})
 
 
 def classify_document_role(metadata: TDocMetadata | None) -> DocumentRoleClassification:
@@ -121,6 +122,7 @@ class EvidenceExtractionService:
                 )
         try:
             blocks = _read_blocks(normalized_path)
+            blocks = _authoritative_blocks(receipt, classification, blocks)
             evidence, diagnostics = self._extract_blocks(receipt, metadata, classification, blocks)
             evidence.sort(key=_evidence_order)
             relative_path = (
@@ -544,6 +546,28 @@ def _match_label(text: str):
         if match:
             return rule, match
     return None
+
+
+def _authoritative_blocks(receipt, classification, blocks):
+    """Keep package attachments from inheriting meeting-record authority.
+
+    Meeting reports commonly bundle participant and TDoc-list spreadsheets with
+    the report itself. Those administrative members are useful normalized data,
+    but their cells are not authoritative meeting prose. False negatives are
+    preferred here, so only document/PDF members can emit meeting-scope evidence.
+    """
+    if classification.role is not DocumentRole.MEETING_REPORT:
+        return blocks
+    authoritative_members = {
+        member.filename
+        for member in receipt.members
+        if member.extraction_status in _INDEXABLE
+        and Path(member.filename).suffix.casefold() in _MEETING_RECORD_SUFFIXES
+    }
+    return [
+        block for block in blocks
+        if block["member_filename"] in authoritative_members
+    ]
 
 
 def _match_inline(text: str):

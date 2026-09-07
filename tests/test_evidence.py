@@ -27,10 +27,11 @@ from threegpp.models import (
 )
 
 
-def _block(block_id, text, *, kind="paragraph", heading=None, level=None, rows=None):
+def _block(block_id, text, *, kind="paragraph", heading=None, level=None, rows=None,
+           member="paper.docx"):
     return {
         "block_id": block_id, "type": kind, "text": text,
-        "member_filename": "paper.docx", "order": int(block_id[1:]),
+        "member_filename": member, "order": int(block_id[1:]),
         "page_number": 3, "heading_level": level,
         "heading_path": heading or [], "rows": rows,
         "sheet_name": "Evidence" if kind == "table" else None,
@@ -56,16 +57,23 @@ def _document(repo, root, tdoc_id, blocks, *, title="HARQ contribution",
         media_type="application/zip", byte_size=3, sha256=identity,
         retention=RetentionState.CACHE,
     )
+    member_filenames = list(dict.fromkeys(block["member_filename"] for block in blocks))
     receipt = DocumentReceipt(
         tdoc_id=tdoc_id, working_group="RAN1", meeting="125", raw=raw,
         members=[PackageMember(
-            filename="paper.docx", media_type="application/docx", byte_size=1,
-            sha256="member", extraction_status=status,
-        )],
-        primary_member="paper.docx", extraction_status=status,
-        parser_versions={"docx": "1"},
+            filename=filename,
+            media_type=("application/xlsx" if filename.casefold().endswith(".xlsx")
+                        else "application/docx"),
+            byte_size=1, sha256=f"member-{index}", extraction_status=status,
+        ) for index, filename in enumerate(member_filenames)],
+        primary_member=member_filenames[0], extraction_status=status,
+        parser_versions={"docx": "1", "xlsx": "1"},
         normalization_identity=NormalizationIdentity(
-            raw_sha256=identity, parser_members={"paper.docx": "docx@1"},
+            raw_sha256=identity,
+            parser_members={
+                filename: ("xlsx@1" if filename.casefold().endswith(".xlsx") else "docx@1")
+                for filename in member_filenames
+            },
             normalized_schema_version="1",
         ),
         normalized_path=relative, text_path=Path("unused"),
@@ -210,15 +218,21 @@ def test_table_evidence_preserves_row_cell_and_authority(tmp_path):
             ["Proposal 1", "Not a meeting-record evidence kind."],
         ],
     )
+    administrative_table = _block(
+        "b000002", None, kind="table", member="TDoc_List_RAN1.xlsx",
+        rows=[["Agreement", "Administrative spreadsheet text is not meeting evidence."]],
+    )
     with MetadataRepository(tmp_path / "db.duckdb") as repo:
         contribution = _document(repo, tmp_path, "R1-1002", [contribution_table])
         report = _document(
-            repo, tmp_path, "R1-1003", [report_table],
+            repo, tmp_path, "R1-1003", [report_table, administrative_table],
             title="Report of RAN1#125 meeting", organizations=["ETSI MCC"],
         )
         service = EvidenceExtractionService(repo, tmp_path)
         assert service.extract_document(contribution).candidates_rejected_by_authority == 1
-        assert service.extract_document(report).candidates_rejected_by_authority == 1
+        report_outcome = service.extract_document(report)
+        assert report_outcome.candidates_rejected_by_authority == 1
+        assert report_outcome.blocks_scanned == 1
         items = service.list_evidence()
 
         proposal = next(item for item in items if item.tdoc_id == "R1-1002")
@@ -228,6 +242,10 @@ def test_table_evidence_preserves_row_cell_and_authority(tmp_path):
         assert proposal.evidence_refs[0].cell_index == 0
         report_items = [item for item in items if item.tdoc_id == "R1-1003"]
         assert {item.kind for item in report_items} == {EvidenceKind.AGREEMENT, EvidenceKind.FFS}
+        assert all(
+            item.evidence_refs[0].evidence_ref.member == "paper.docx"
+            for item in report_items
+        )
         assert all(item.detection_basis is DetectionBasis.TABLE_LABEL for item in items)
 
 
@@ -253,7 +271,7 @@ def test_incremental_ruleset_and_stale_source_safety(tmp_path, monkeypatch):
         assert changed_item.statement_text != original.statement_text
 
         monkeypatch.setattr(
-            "threegpp.evidence.service.EXTRACTION_RULESET_VERSION", "explicit-structural-v2"
+            "threegpp.evidence.service.EXTRACTION_RULESET_VERSION", "explicit-structural-v3"
         )
         outcome = service.extract_document(changed)
         rules_changed_item = service.list_evidence()[0]
@@ -278,6 +296,30 @@ def test_incremental_ruleset_and_stale_source_safety(tmp_path, monkeypatch):
         assert repo.connection.execute(
             "SELECT status FROM semantic_evidence_state WHERE tdoc_id='R1-1004'"
         ).fetchone()[0] == "STALE"
+
+
+def test_unindexable_and_checksum_changed_documents_cannot_emit(tmp_path):
+    with MetadataRepository(tmp_path / "db.duckdb") as repo:
+        unsupported = _document(
+            repo, tmp_path, "R1-1006",
+            [_block("b000001", "Proposal 1: Must not be emitted.")],
+            status=ExtractionStatus.UNSUPPORTED_FORMAT,
+        )
+        service = EvidenceExtractionService(repo, tmp_path)
+        outcome = service.extract_document(unsupported)
+        assert outcome.status == "NOT_INDEXABLE"
+        assert outcome.evidence_extracted == 0
+        assert not service.list_evidence(EvidenceExtractionRequest(tdoc_ids=["R1-1006"]))
+
+        receipt = _document(
+            repo, tmp_path, "R1-1007",
+            [_block("b000001", "Proposal 1: Initially valid.")],
+        )
+        assert service.extract_document(receipt).evidence_extracted == 1
+        changed_checksum = receipt.model_copy(update={"normalized_checksum": "0" * 64})
+        repo.upsert_document_receipt(changed_checksum)
+        assert not service.list_evidence(EvidenceExtractionRequest(tdoc_ids=["R1-1007"]))
+        assert service.extract_document(changed_checksum).status == "STALE"
 
 
 def test_evidence_cli_extract_list_and_inspect(tmp_path, capsys):
