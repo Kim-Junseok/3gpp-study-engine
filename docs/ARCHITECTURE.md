@@ -76,3 +76,24 @@ evidence evicts postings and becomes stale. Ranking is block BM25 (`k1=1.2`,
 `b=0.75`, positive probabilistic IDF), plus explicit phrase, heading, and title
 bonuses. Metadata can boost only a block with body query evidence. All operations
 are offline and cause zero TDoc downloads.
+
+## V0.4 explicit semantic evidence boundary
+
+```text
+Official raw evidence → normalized blocks → EvidenceRef → SemanticEvidence
+```
+
+`threegpp.evidence` scans one checksum-verified normalized document at a time.
+Centralized, versioned rules recognize explicit labels, bounded heading sections,
+table labels, and narrow sentence cues. Deterministic document-role classification
+gates authority: contributions may yield contribution proposals, observations,
+conclusions, and FFS; accepted meeting reports may yield meeting agreements,
+conclusions, decisions, and FFS. Agenda, chair, and unknown roles yield none.
+
+Portable evidence JSONL.gz is derived and rebuildable. DuckDB stores its receipt,
+query columns, short literal statements, and evidence JSON—not complete source
+documents. Queries validate metadata identity, normalization identity/checksum,
+rule/schema versions, derived checksum, and every referenced block/span. Invalid
+sets become stale and cannot return evidence. Extraction and querying are offline.
+The semantic evidence schema is version `1`; the centralized extraction ruleset
+is `explicit-structural-v1`, with stable individual rule IDs at version `1`.

@@ -6,6 +6,17 @@ from .document import (
     TDocMetadata,
     merge_tdoc_metadata,
 )
+from .evidence import (
+    DetectionBasis,
+    DocumentRole,
+    DocumentRoleClassification,
+    EvidenceExtractionOutcome,
+    EvidenceExtractionRequest,
+    EvidenceKind,
+    EvidenceScope,
+    EvidenceSpan,
+    SemanticEvidence,
+)
 from .meeting import Meeting, WorkingGroup, normalize_meeting_identifier
 from .parse import SpreadsheetParseResult, SpreadsheetParseSummary
 from .query import TDocQuery
@@ -28,6 +39,14 @@ from .study import (
 )
 
 __all__ = [
+    "DetectionBasis",
+    "DocumentRole",
+    "DocumentRoleClassification",
+    "EvidenceExtractionOutcome",
+    "EvidenceExtractionRequest",
+    "EvidenceKind",
+    "EvidenceScope",
+    "EvidenceSpan",
     "ArtifactType",
     "CandidateInventory",
     "CandidateTDoc",
@@ -42,6 +61,7 @@ __all__ = [
     "TDocAvailability",
     "SourceArtifact",
     "SnapshotRole",
+    "SemanticEvidence",
     "SnapshotCoverage",
     "SpreadsheetParseResult",
     "SpreadsheetParseSummary",

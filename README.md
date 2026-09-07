@@ -1,10 +1,10 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.3 adds offline, deterministic lexical retrieval of exact normalized evidence blocks.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.4 adds deterministic extraction of explicitly marked semantic evidence from normalized blocks.
 
 ## Milestone status
 
-**Current development milestone: V0.3 deterministic full-text evidence retrieval.**
+**Current development milestone: V0.4 explicit proposal/agreement evidence extraction.**
 
 ```text
 3GPP meeting
@@ -32,9 +32,13 @@ threegpp inspect-document --tdoc R1-2600001 --wg RAN1 --meeting 125
 threegpp index-documents --wg RAN1 --meeting 125
 threegpp search-evidence --query '"HARQ feedback"' --wg RAN1 --meeting 125
 threegpp search-tdocs --query 'contention based uplink'
+threegpp extract-evidence --wg RAN1 --meeting 125 --tdoc R1-2600001
+threegpp list-evidence --wg RAN1 --meeting 125 --kind proposal
 ```
 
 Indexing and searching use only local normalized documents and cause zero TDoc downloads. Results are lexically relevant evidence candidates, not semantic proposal or agreement conclusions.
+
+Semantic extraction is a separate explicit operation. It recognizes only versioned labels, bounded heading context, table labels, and narrow sentence cues. Contribution evidence and authoritative meeting-record evidence have different scopes; a company contribution can never create a meeting agreement.
 
 Set `THREEGPP_DATA_ROOT=/another/disk/3gpp-data` to relocate runtime research storage; the fallback remains `./data`. Existing data are never moved automatically. Raw TDocs default to `CACHE`; `PINNED` marks evidence that must not be automatically pruned. This release does not implement pruning.
 
@@ -137,7 +141,7 @@ Live runtime research data under `data/raw/`, `data/normalized/`, `data/manifest
 
 V0.2a.2 embedded-row manifests remain readable. `migrate-manifest` externalizes their current and per-snapshot rows, writes a new V0.2a.3 receipt, preserves source and field provenance, and leaves both the old receipt and raw evidence untouched.
 
-The rebuildable DuckDB search index stores block locators, token counts, and term frequencies—not complete body text. Snippets are bounded literal views loaded from the checksum-verified normalized document at result time.
+The rebuildable DuckDB search index stores block locators, token counts, and term frequencies—not complete body text. V0.4 evidence is stored as portable `data/derived/evidence/` JSONL.gz plus a minimal DuckDB query index and lifecycle receipt. Statements remain literal and every span resolves to normalized blocks.
 
 ## Current limitations
 
@@ -148,7 +152,7 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - Password-protected, corrupt, zipped spreadsheet bundles, and unusual unrecognized headers are reported but not automatically repaired.
 - Organization normalization splits source strings but applies no curated alias equivalence.
 - Meeting dates and locations are not inferred from upload timestamps.
-- No proposal, agreement, conclusion, or company-trend extraction is implemented.
+- Explicit rules intentionally miss implicit or ambiguous semantic statements; no support/opposition, equivalence, company-position, or cross-meeting trend inference is implemented.
 
 ## Roadmap
 

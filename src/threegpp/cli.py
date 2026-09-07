@@ -117,6 +117,19 @@ def build_parser() -> argparse.ArgumentParser:
         "search-tdocs", help="aggregate lexical block hits by TDoc"
     )
     _add_search_arguments(search_tdocs)
+
+    extract_evidence = subparsers.add_parser(
+        "extract-evidence", help="extract explicit semantic evidence from normalized TDocs"
+    )
+    _add_evidence_scope_arguments(extract_evidence)
+    list_evidence = subparsers.add_parser(
+        "list-evidence", help="query persisted explicit semantic evidence"
+    )
+    _add_evidence_scope_arguments(list_evidence, query_filters=True)
+    inspect_evidence = subparsers.add_parser(
+        "inspect-evidence", help="resolve one semantic evidence item and its source blocks"
+    )
+    inspect_evidence.add_argument("--evidence-id", required=True)
     return parser
 
 
@@ -139,6 +152,22 @@ def _add_search_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--limit", type=int, default=20)
 
 
+def _add_evidence_scope_arguments(
+    parser: argparse.ArgumentParser, *, query_filters: bool = False
+) -> None:
+    from threegpp.models import DocumentRole, EvidenceKind, EvidenceScope
+
+    parser.add_argument("--wg", action="append", choices=[item.value for item in WorkingGroup])
+    parser.add_argument("--meeting", action="append", type=normalize_meeting_identifier)
+    parser.add_argument("--tdoc", action="append")
+    parser.add_argument("--document-role", action="append", choices=[item.value for item in DocumentRole])
+    if query_filters:
+        parser.add_argument("--kind", action="append", choices=[item.value for item in EvidenceKind])
+        parser.add_argument("--scope", action="append", choices=[item.value for item in EvidenceScope])
+        parser.add_argument("--organization", action="append")
+        parser.add_argument("--limit", type=int, default=100)
+
+
 def source_for(value: str) -> ThreeGPPSource:
     working_group = WorkingGroup.parse(value)
     return RAN1Source() if working_group is WorkingGroup.RAN1 else RAN2Source()
@@ -153,6 +182,34 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"extract-evidence", "list-evidence", "inspect-evidence"}:
+        from threegpp.evidence import EvidenceExtractionService
+        from threegpp.models import EvidenceExtractionRequest
+
+        with MetadataRepository(args.db) as repository:
+            service = EvidenceExtractionService(repository, args.data_dir)
+            if args.command == "inspect-evidence":
+                evidence, blocks = service.get_evidence_sources(args.evidence_id)
+                _json({
+                    "evidence": evidence.model_dump(mode="json"),
+                    "source_blocks": blocks,
+                })
+                return 0
+            request = EvidenceExtractionRequest(
+                working_groups=args.wg or [], meetings=args.meeting or [],
+                tdoc_ids=args.tdoc or [], document_roles=args.document_role or [],
+                evidence_kinds=getattr(args, "kind", None) or [],
+                scopes=getattr(args, "scope", None) or [],
+                organizations=getattr(args, "organization", None) or [],
+                limit=getattr(args, "limit", 100),
+            )
+            result = (
+                service.extract_documents(request) if args.command == "extract-evidence"
+                else service.list_evidence(request)
+            )
+            _json(result)
+        return 0
+
     if args.command == "index-documents":
         from threegpp.documents.models import DocumentReceipt
         from threegpp.search import EvidenceSearchService

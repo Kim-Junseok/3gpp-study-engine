@@ -1,6 +1,6 @@
 ---
 name: 3gpp-study
-description: Build provenance-aware 3GPP RAN1/RAN2 candidate inventories and, only when explicitly requested, plan, fetch, and structurally normalize selected official TDocs through the Python core. Use for meeting/TDoc selection and factual extraction outcomes; not for proposal, agreement, or company-position analysis.
+description: Build provenance-aware 3GPP RAN1/RAN2 studies and, only when explicitly requested, retrieve normalized passages or extract explicitly labeled proposal/agreement evidence through the Python core. Do not use for inferred positions, equivalence, synthesis, or trends.
 ---
 
 # 3GPP Study
@@ -33,3 +33,16 @@ each result as a **lexically relevant evidence candidate** with TDoc, member,
 block ID/type, heading/page/sheet, literal snippet, matched terms, match kind, and
 score explanation. `search-tdocs` is aggregation derived from block hits. Never
 turn a lexical hit into “company proposes/supports” or “RAN agreed”.
+
+For explicit semantic requests, run `threegpp extract-evidence` over the bounded
+normalized scope, then `threegpp list-evidence`; use `inspect-evidence` when exact
+source blocks are needed. Present the role and its basis, kind, scope, literal
+statement, exact source organizations for contribution evidence, EvidenceRefs,
+and detection rule/cue. These commands download no TDocs.
+
+Only describe “company proposed X” for `proposal + contribution` evidence whose
+stored organizations include that company. Only describe “RAN agreed X” for
+`agreement + meeting` evidence from an accepted meeting-report role. A company’s
+“we agree” wording is never a meeting agreement. Do not independently classify,
+paraphrase, infer support/opposition or company positions, cluster proposals, or
+synthesize cross-meeting trends.

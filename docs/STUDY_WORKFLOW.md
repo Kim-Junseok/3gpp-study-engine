@@ -39,3 +39,15 @@ member/block ID, heading/page/sheet, matched terms, and score components.
 
 V0.3 ends at lexical evidence candidates. Proposal/agreement extraction,
 support/opposition classification, and company-position inference remain future.
+
+# Explicit semantic evidence extraction
+
+Run `extract-evidence` only when semantic evidence is explicitly requested, then
+query it with `list-evidence` or resolve it with `inspect-evidence`. The operation
+reads existing normalized blocks and downloads nothing. Report document role and
+basis, kind, contribution/meeting scope, literal statement, source organizations
+only for contributions, detection rule/cue, and every EvidenceRef/span.
+
+Treat rejected authority candidates and ambiguous cues as diagnostics, not hidden
+evidence. V0.4 performs no support/opposition inference, proposal equivalence,
+company-position inference, synthesis, or cross-meeting trend analysis.

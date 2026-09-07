@@ -141,6 +141,50 @@ CREATE TABLE IF NOT EXISTS search_postings (
     term_frequency INTEGER NOT NULL,
     PRIMARY KEY (term, tdoc_id, working_group, meeting_number, member_filename, block_id)
 );
+
+-- Derived V0.4 semantic evidence. Full normalized documents remain external.
+CREATE TABLE IF NOT EXISTS semantic_evidence_state (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    document_role VARCHAR NOT NULL,
+    document_role_basis_json VARCHAR NOT NULL,
+    metadata_identity_json VARCHAR NOT NULL,
+    normalization_identity_json VARCHAR,
+    normalized_checksum VARCHAR,
+    evidence_schema_version VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    evidence_path VARCHAR,
+    evidence_checksum VARCHAR,
+    evidence_count INTEGER NOT NULL DEFAULT 0,
+    blocks_scanned INTEGER NOT NULL DEFAULT 0,
+    explicit_labels_detected INTEGER NOT NULL DEFAULT 0,
+    candidates_rejected INTEGER NOT NULL DEFAULT 0,
+    ambiguous_cues_ignored INTEGER NOT NULL DEFAULT 0,
+    extracted_at TIMESTAMPTZ,
+    error VARCHAR,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number)
+);
+
+CREATE TABLE IF NOT EXISTS semantic_evidence (
+    evidence_id VARCHAR PRIMARY KEY,
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    kind VARCHAR NOT NULL,
+    scope VARCHAR NOT NULL,
+    document_role VARCHAR NOT NULL,
+    source_organizations_json VARCHAR NOT NULL,
+    label VARCHAR,
+    ordinal INTEGER,
+    detection_basis VARCHAR NOT NULL,
+    rule_id VARCHAR NOT NULL,
+    rule_version VARCHAR NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    statement_text VARCHAR NOT NULL,
+    evidence_json VARCHAR NOT NULL
+);
 """
 
 

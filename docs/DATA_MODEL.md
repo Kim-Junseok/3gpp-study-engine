@@ -29,9 +29,9 @@ Identity is `(working_group, meeting, tdoc_id)`. Null or empty incoming fields n
 
 The V0.2a organization/availability migration remains in place. V0.2a.1 manifests load with empty snapshot-role data. Existing normalized rows remain current until an all-snapshot ingestion establishes a newer canonical view; old artifacts are not assigned roles without new classification evidence. V0.2a.2 embedded rows can be explicitly externalized without fabricating absent values or snapshot roles.
 
-## Reserved semantic distinctions
+## Semantic distinctions
 
-Company proposal, company observation, discussion, meeting agreement, meeting conclusion, and FFS/unresolved issue remain separate future evidence entities. “Samsung proposed X” must never become “RAN1 agreed X” without separate meeting-agreement evidence.
+Company proposal, company observation, discussion, meeting agreement, meeting conclusion, and FFS/unresolved issue remain separate evidence concepts. “Samsung proposed X” must never become “RAN1 agreed X” without separate meeting-scope agreement evidence from an accepted meeting report.
 # V0.2b document models
 
 `TDocFetchPlan` contains exact identities, official URLs when known, availability, per-item selection reasons, and retention state. `RawArtifact` records URL, path, retrieval time, media type, byte count, and SHA-256. A package has zero or more `PackageMember` records; a probable primary is assigned only when exactly one supported member exists.
@@ -51,3 +51,23 @@ DuckDB `search_blocks` stores locators and token lengths; `search_postings` stor
 term frequencies; `search_index_state` stores normalization identity, versions,
 counts, status, and indexing time. Complete bodies are never stored there. Search
 schema and tokenizer versions are independently set to `1`.
+
+# V0.4 semantic evidence models
+
+`EvidenceKind` distinguishes proposal, observation, agreement, conclusion, FFS,
+and decision. `EvidenceScope` separates contribution statements from meeting
+records. `DocumentRoleClassification` records a conservative role and its basis;
+`DetectionBasis` records explicit label, heading context, table label, or explicit
+sentence cue. `EvidenceSpan` wraps an exact `EvidenceRef` with sequence and
+optional character or table row/cell coordinates. `SemanticEvidence` retains
+literal statement text, rule identity, source attribution, normalization identity,
+and deterministic evidence ID.
+
+Evidence IDs are `ev-` plus the first 24 hexadecimal SHA-256 characters over
+canonical JSON containing schema/ruleset versions, TDoc, kind/scope, spans,
+label/ordinal, and rule ID/version. Unchanged inputs produce identical IDs.
+
+`semantic_evidence_state` is the lifecycle/provenance receipt. It records document
+role, metadata and normalization identities, checksums, versions, diagnostics,
+portable output, and count. `semantic_evidence` provides query columns plus short
+literal statement/evidence JSON. Neither table stores a complete TDoc body.

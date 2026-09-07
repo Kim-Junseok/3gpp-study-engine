@@ -24,3 +24,17 @@ support, or company-position conclusion. Every hit resolves to a current
 normalized member and stable block ID. Search verifies the normalized checksum;
 missing or changed files/blocks become stale and their postings are removed.
 Snippets preserve literal source text and are non-authoritative bounded views.
+
+# Explicit semantic evidence
+
+V0.4 semantic evidence is derived analysis tied to one or more exact normalized
+blocks. Literal statements are never paraphrased. A lexical hit is not semantic
+evidence, and semantic evidence is not a cross-meeting trend.
+
+Authority is role-gated. Company contributions may yield only contribution-scope
+proposal, observation, conclusion, or FFS evidence, attributed exactly to stored
+source organizations. Only a document deterministically classified as an ETSI MCC
+RAN meeting report may yield meeting-scope agreement, conclusion, decision, or FFS
+evidence; meeting evidence carries no company-position attribution. “We agree” or
+an “Agreement” label in a contribution is never promoted to a meeting agreement.
+Company proposal ≠ meeting agreement, and company conclusion ≠ meeting conclusion.

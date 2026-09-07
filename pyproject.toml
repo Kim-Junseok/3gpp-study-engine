@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "3gpp-study-engine"
-version = "0.3.0"
-description = "Provenance-first normalization and deterministic evidence retrieval for 3GPP material"
+version = "0.4.0"
+description = "Provenance-first normalization, retrieval, and explicit semantic evidence for 3GPP material"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
