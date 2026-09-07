@@ -60,3 +60,19 @@ RAN1 and RAN2 share a directory adapter configured by group path, meeting prefix
 On opening a V0.1–V0.2a.1 DuckDB file, the repository adds snapshot tables and marks existing normalized records current. V0.2a.1 manifests load with empty role data rather than fabricated roles. A new all-snapshot ingestion establishes canonical current while preserving earlier metadata and availability evidence.
 
 V0.2a.2 embedded-row manifests remain readable. Migration is deliberately explicit: `threegpp migrate-manifest --manifest ...` writes deterministic snapshot/current JSONL.gz files and a new slim V0.2a.3 receipt without modifying the legacy receipt or downloading sources. A hydrated V0.2a.3 manifest can re-import its normalized rows into DuckDB.
+
+## V0.3 search boundary
+
+```text
+Normalized TDocs → block lexical index → EvidenceSearchQuery
+                 → EvidenceSearchHit → EvidenceRef → exact normalized block
+```
+
+`threegpp.search` owns the disposable `search_blocks`, `search_postings`, and
+`search_index_state` DuckDB tables. Complete body text remains in normalized
+files. Matching normalization identity and schema/tokenizer versions reuse an
+index; changed identity replaces only that TDoc. Missing or checksum-conflicting
+evidence evicts postings and becomes stale. Ranking is block BM25 (`k1=1.2`,
+`b=0.75`, positive probabilistic IDF), plus explicit phrase, heading, and title
+bonuses. Metadata can boost only a block with body query evidence. All operations
+are offline and cause zero TDoc downloads.

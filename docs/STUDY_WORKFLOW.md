@@ -28,3 +28,14 @@ The Skill may coordinate this workflow, but `StudyRequest`, ingestion, parsing, 
 After metadata candidate review, construct and inspect a fetch plan. Automatically generated plans include only downloadable candidates at or above the requested match level and default to 50 items maximum. Explicit identity selection is separate. Execution reports cached, downloadable, listed-only, and unknown counts, isolates ordinary per-document parser failures, and keeps provenance conflicts loud. Retrieve normalized blocks/text through `DocumentService.retrieve`; downstream callers must not infer filesystem paths.
 
 V0.2b ends at deterministic structural extraction. Semantic retrieval, proposal/agreement extraction, support/opposition classification, and company-position inference are future work.
+
+# Deterministic evidence retrieval
+
+After normalization, run `index-documents` (no downloads), then use
+`search-evidence` for exact blocks or `search-tdocs` for aggregation derived from
+block hits. Quoted text requests exact token phrases. Preserve a `StudyRequest`
+scope with WG, meeting, organization, and TDoc filters. Present literal snippet,
+member/block ID, heading/page/sheet, matched terms, and score components.
+
+V0.3 ends at lexical evidence candidates. Proposal/agreement extraction,
+support/opposition classification, and company-position inference remain future.

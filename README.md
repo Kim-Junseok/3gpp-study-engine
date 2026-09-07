@@ -1,10 +1,10 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.2a.3 preserves and parses every discovered official TDoc-list snapshot, keeps canonical and request-scoped views isolated, and produces explainable metadata-only candidate inventories without embedding thousands of rows in each manifest.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.3 adds offline, deterministic lexical retrieval of exact normalized evidence blocks.
 
 ## Milestone status
 
-**Current development milestone: V0.2b.1. The accepted V0.2a.3 metadata layer remains frozen.**
+**Current development milestone: V0.3 deterministic full-text evidence retrieval.**
 
 ```text
 3GPP meeting
@@ -29,7 +29,12 @@ Body retrieval is never triggered by `study-inventory`. Inspect a plan, then exp
 threegpp plan-fetch --request studies/example.yaml --minimum-match high --output fetch-plan.yaml
 threegpp fetch-tdocs --plan fetch-plan.yaml
 threegpp inspect-document --tdoc R1-2600001 --wg RAN1 --meeting 125
+threegpp index-documents --wg RAN1 --meeting 125
+threegpp search-evidence --query '"HARQ feedback"' --wg RAN1 --meeting 125
+threegpp search-tdocs --query 'contention based uplink'
 ```
+
+Indexing and searching use only local normalized documents and cause zero TDoc downloads. Results are lexically relevant evidence candidates, not semantic proposal or agreement conclusions.
 
 Set `THREEGPP_DATA_ROOT=/another/disk/3gpp-data` to relocate runtime research storage; the fallback remains `./data`. Existing data are never moved automatically. Raw TDocs default to `CACHE`; `PINNED` marks evidence that must not be automatically pruned. This release does not implement pruning.
 
@@ -131,6 +136,8 @@ Normalized filenames are content-addressed. Each manifest reference records path
 Live runtime research data under `data/raw/`, `data/normalized/`, `data/manifests/`, and `data/metadata.duckdb` stay local and are normally excluded from Git history. Only intentional small placeholders and test fixtures belong in the repository.
 
 V0.2a.2 embedded-row manifests remain readable. `migrate-manifest` externalizes their current and per-snapshot rows, writes a new V0.2a.3 receipt, preserves source and field provenance, and leaves both the old receipt and raw evidence untouched.
+
+The rebuildable DuckDB search index stores block locators, token counts, and term frequencies—not complete body text. Snippets are bounded literal views loaded from the checksum-verified normalized document at result time.
 
 ## Current limitations
 

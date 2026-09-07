@@ -101,6 +101,22 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_doc.add_argument("--tdoc", required=True)
     inspect_doc.add_argument("--wg", choices=[item.value for item in WorkingGroup])
     inspect_doc.add_argument("--meeting")
+
+    index_docs = subparsers.add_parser(
+        "index-documents", help="index already-normalized TDocs (never downloads)"
+    )
+    index_docs.add_argument("--wg", choices=[item.value for item in WorkingGroup])
+    index_docs.add_argument("--meeting", type=normalize_meeting_identifier)
+    index_docs.add_argument("--tdoc")
+
+    search = subparsers.add_parser(
+        "search-evidence", help="find lexically relevant normalized evidence blocks"
+    )
+    _add_search_arguments(search)
+    search_tdocs = subparsers.add_parser(
+        "search-tdocs", help="aggregate lexical block hits by TDoc"
+    )
+    _add_search_arguments(search_tdocs)
     return parser
 
 
@@ -111,6 +127,16 @@ def _add_wg(parser: argparse.ArgumentParser) -> None:
 def _add_wg_meeting(parser: argparse.ArgumentParser) -> None:
     _add_wg(parser)
     parser.add_argument("--meeting", required=True, type=normalize_meeting_identifier)
+
+
+def _add_search_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--query", required=True)
+    parser.add_argument("--wg", action="append", choices=[item.value for item in WorkingGroup])
+    parser.add_argument("--meeting", action="append", type=normalize_meeting_identifier)
+    parser.add_argument("--tdoc", action="append")
+    parser.add_argument("--organization", action="append")
+    parser.add_argument("--block-type", action="append")
+    parser.add_argument("--limit", type=int, default=20)
 
 
 def source_for(value: str) -> ThreeGPPSource:
@@ -127,6 +153,35 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "index-documents":
+        from threegpp.documents.models import DocumentReceipt
+        from threegpp.search import EvidenceSearchService
+
+        with MetadataRepository(args.db) as repository:
+            clauses, values = ["1=1"], []
+            for column, value in (("working_group", args.wg), ("meeting_number", args.meeting), ("tdoc_id", args.tdoc)):
+                if value:
+                    clauses.append(f"{column} = ?"); values.append(value)
+            rows = repository.connection.execute(
+                "SELECT receipt_json FROM tdoc_documents WHERE " + " AND ".join(clauses)
+                + " ORDER BY working_group,meeting_number,tdoc_id", values
+            ).fetchall()
+            service = EvidenceSearchService(repository, args.data_dir)
+            _json([service.index_document(DocumentReceipt.model_validate_json(row[0])) for row in rows])
+        return 0
+
+    if args.command in {"search-evidence", "search-tdocs"}:
+        from threegpp.models import EvidenceSearchQuery
+        from threegpp.search import EvidenceSearchService
+
+        query = EvidenceSearchQuery(query=args.query, working_groups=args.wg or [],
+            meetings=args.meeting or [], tdoc_ids=args.tdoc or [],
+            organizations=args.organization or [], block_types=args.block_type or [], limit=args.limit)
+        with MetadataRepository(args.db) as repository:
+            service = EvidenceSearchService(repository, args.data_dir)
+            result = service.search_evidence(query) if args.command == "search-evidence" else service.search_tdocs(query)
+            _json(result)
+        return 0
     if args.command == "plan-fetch":
         from threegpp.models import MatchLevel
 

@@ -16,3 +16,11 @@ Directory facts, official-list facts, document-content facts, and analytical inf
 # Document evidence
 
 Downloaded bytes are official raw evidence and are never silently overwritten. `CACHE` is removable only by a future explicit retention workflow; `PINNED` must not be automatically pruned. No pruning is implemented. Normalized text is derived evidence and every receipt links it to the raw SHA-256, package member, parser/version, and stable block ID. Extracted wording is not itself classified as a proposal or meeting agreement in V0.2b.
+
+# Retrieval evidence
+
+A V0.3 hit is a lexically relevant evidence candidate, not a proposal, agreement,
+support, or company-position conclusion. Every hit resolves to a current
+normalized member and stable block ID. Search verifies the normalized checksum;
+missing or changed files/blocks become stale and their postings are removed.
+Snippets preserve literal source text and are non-authoritative bounded views.

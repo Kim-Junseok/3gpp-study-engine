@@ -12,6 +12,10 @@ from .query import TDocQuery
 from .source import ArtifactType, SourceArtifact
 from .snapshot import SnapshotRole, TDocListSnapshot
 from .storage import NormalizedOutput
+from .search import (
+    EvidenceRef, EvidenceSearchHit, EvidenceSearchQuery, IndexOutcome, MatchKind,
+    TDocSearchHit,
+)
 from .study import (
     CandidateInventory,
     CandidateTDoc,
@@ -47,6 +51,12 @@ __all__ = [
     "TDocQuery",
     "TopicMatchEvidence",
     "WorkingGroup",
+    "EvidenceRef",
+    "EvidenceSearchHit",
+    "EvidenceSearchQuery",
+    "IndexOutcome",
+    "MatchKind",
+    "TDocSearchHit",
     "merge_tdoc_metadata",
     "normalize_meeting_identifier",
 ]

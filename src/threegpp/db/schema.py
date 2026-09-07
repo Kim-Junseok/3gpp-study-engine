@@ -97,6 +97,50 @@ CREATE TABLE IF NOT EXISTS tdoc_documents (
     receipt_json VARCHAR NOT NULL,
     PRIMARY KEY (tdoc_id, working_group, meeting_number)
 );
+
+-- Derived and rebuildable V0.3 lexical index.  Authoritative block text remains
+-- in normalized/document.jsonl.gz and is deliberately absent from these tables.
+CREATE TABLE IF NOT EXISTS search_index_state (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    normalization_identity_json VARCHAR,
+    normalized_path VARCHAR,
+    normalized_checksum VARCHAR,
+    index_schema_version VARCHAR NOT NULL,
+    tokenizer_version VARCHAR NOT NULL,
+    indexed_block_count INTEGER NOT NULL DEFAULT 0,
+    posting_count INTEGER NOT NULL DEFAULT 0,
+    indexed_at TIMESTAMPTZ,
+    error VARCHAR,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number)
+);
+
+CREATE TABLE IF NOT EXISTS search_blocks (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    member_filename VARCHAR NOT NULL,
+    block_id VARCHAR NOT NULL,
+    block_type VARCHAR NOT NULL,
+    heading_path_json VARCHAR NOT NULL,
+    page_number INTEGER,
+    sheet_name VARCHAR,
+    token_count INTEGER NOT NULL,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number, member_filename, block_id)
+);
+
+CREATE TABLE IF NOT EXISTS search_postings (
+    term VARCHAR NOT NULL,
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    member_filename VARCHAR NOT NULL,
+    block_id VARCHAR NOT NULL,
+    term_frequency INTEGER NOT NULL,
+    PRIMARY KEY (term, tdoc_id, working_group, meeting_number, member_filename, block_id)
+);
 """
 
 

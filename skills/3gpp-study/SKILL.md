@@ -24,3 +24,12 @@ If the user explicitly asks to download and prepare candidates:
 4. Report counts for parsed, partial, unsupported, text-unavailable, and failed outcomes. Report structural/provenance facts only.
 
 Ordinary `study-inventory` never downloads TDoc bodies. Never independently parse paths or rescore records when the core API supplies the result. Never infer technical proposals, agreements, conclusions, company positions, or support/opposition from extracted text.
+
+For “find relevant passages about HARQ feedback within normalized RAN1#125
+TDocs”, run `threegpp index-documents --wg RAN1 --meeting 125`, then
+`threegpp search-evidence --query 'HARQ feedback' --wg RAN1 --meeting 125`.
+These commands use only local normalized evidence and download nothing. Present
+each result as a **lexically relevant evidence candidate** with TDoc, member,
+block ID/type, heading/page/sheet, literal snippet, matched terms, match kind, and
+score explanation. `search-tdocs` is aggregation derived from block hits. Never
+turn a lexical hit into “company proposes/supports” or “RAN agreed”.

@@ -37,3 +37,17 @@ Company proposal, company observation, discussion, meeting agreement, meeting co
 `TDocFetchPlan` contains exact identities, official URLs when known, availability, per-item selection reasons, and retention state. `RawArtifact` records URL, path, retrieval time, media type, byte count, and SHA-256. A package has zero or more `PackageMember` records; a probable primary is assigned only when exactly one supported member exists.
 
 `NormalizedTDoc` contains member parser/status information, warnings, deterministic blocks, flattened text, and source linkage. Blocks are numbered globally in package order as `b000001`, `b000002`, and so on and retain member, page, heading path, sheet, and table/row context. `NormalizationIdentity` combines the raw SHA-256, each member's parser name/version, and the normalized-document schema version; cache reuse requires exact equality. `DocumentReceipt` contains that identity plus paths, independent block/text checksums, counts, parser versions, retention, and warnings—not body text. DuckDB indexes the receipt status, checksums, identity/schema, retention, and derived-output path while body content remains in portable files.
+
+# V0.3 retrieval models
+
+`EvidenceSearchQuery` carries lexical text and optional WG, meeting, TDoc,
+organization, block-type, extraction-status, and retention filters.
+`EvidenceRef` locates one member/block with type, heading path, page, and sheet.
+`EvidenceSearchHit` adds literal snippet, metadata, matched terms, phrase/match
+kind, and decomposed score. `TDocSearchHit` derives its best block, block count,
+and aggregate score from block hits.
+
+DuckDB `search_blocks` stores locators and token lengths; `search_postings` stores
+term frequencies; `search_index_state` stores normalization identity, versions,
+counts, status, and indexing time. Complete bodies are never stored there. Search
+schema and tokenizer versions are independently set to `1`.
