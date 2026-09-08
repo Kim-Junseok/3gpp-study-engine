@@ -51,3 +51,11 @@ only for contributions, detection rule/cue, and every EvidenceRef/span.
 Treat rejected authority candidates and ambiguous cues as diagnostics, not hidden
 evidence. V0.4 performs no support/opposition inference, proposal equivalence,
 company-position inference, synthesis, or cross-meeting trend analysis.
+
+## Offline topic study
+
+After documents are normalized, indexed, and semantically extracted, run `threegpp study-topic --query <terms>`. Review coverage first, then each distinct evidence layer, authority meeting, disposition, qualification, and unresolved link. A report under `RAN1#125` titled `Report of RAN1#124b meeting` appears on the `RAN1#124bis` timeline while preserving discovery under `#125`.
+
+Context examines at most three immediately following blocks in the same member and heading path, accepts only explicit labels, and stops at an unlabelled block or heading. Incomplete studies must be phrased as “within the currently normalized material”.
+
+Coverage counts are scoped to working-group and discovery-meeting filters, before topic and evidence-level filters. `documents_indexable` counts stored INDEXED states; `meeting_reports_available` counts role-classified extraction states. These are local processing diagnostics, not a complete meeting inventory. Semantic candidate scanning is currently bounded to 5000 fresh records; lexical retrieval has its own result limit. Results are capped per contribution organization and per authority meeting, and semantic truncation is reported. An unresolved-authority group is separately bounded. These limits can omit relevant material.

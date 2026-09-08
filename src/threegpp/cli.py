@@ -130,6 +130,21 @@ def build_parser() -> argparse.ArgumentParser:
         "inspect-evidence", help="resolve one semantic evidence item and its source blocks"
     )
     inspect_evidence.add_argument("--evidence-id", required=True)
+    authority = subparsers.add_parser(
+        "inspect-meeting-authority", help="resolve discovery and authority meetings for a local TDoc"
+    )
+    authority.add_argument("--tdoc", required=True)
+    topic = subparsers.add_parser(
+        "study-topic", help="build an offline, evidence-layered topic bundle (never downloads)"
+    )
+    topic.add_argument("--query", required=True)
+    topic.add_argument("--wg", action="append", choices=[item.value for item in WorkingGroup])
+    topic.add_argument("--authority-meeting", action="append", type=normalize_meeting_identifier)
+    topic.add_argument("--discovery-meeting", action="append", type=normalize_meeting_identifier)
+    topic.add_argument("--organization", action="append")
+    from threegpp.models import EvidenceKind
+    topic.add_argument("--kind", action="append", choices=[item.value for item in EvidenceKind])
+    topic.add_argument("--limit", type=int, default=20)
     return parser
 
 
@@ -182,6 +197,21 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"inspect-meeting-authority", "study-topic"}:
+        from threegpp.models import TopicStudyRequest
+        from threegpp.topic import TopicStudyService
+        with MetadataRepository(args.db) as repository:
+            service = TopicStudyService(repository, args.data_dir)
+            if args.command == "inspect-meeting-authority":
+                _json(service.inspect_meeting_authority(args.tdoc))
+            else:
+                _json(service.build_topic_study(TopicStudyRequest(
+                    query=args.query, working_groups=args.wg or [],
+                    authority_meetings=args.authority_meeting or [],
+                    discovery_meetings=args.discovery_meeting or [],
+                    organizations=args.organization or [], evidence_kinds=args.kind or [],
+                    limit_per_group=args.limit)))
+        return 0
     if args.command in {"extract-evidence", "list-evidence", "inspect-evidence"}:
         from threegpp.evidence import EvidenceExtractionService
         from threegpp.models import EvidenceExtractionRequest

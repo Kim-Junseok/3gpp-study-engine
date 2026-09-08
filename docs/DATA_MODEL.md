@@ -71,3 +71,15 @@ label/ordinal, and rule ID/version. Unchanged inputs produce identical IDs.
 role, metadata and normalization identities, checksums, versions, diagnostics,
 portable output, and count. `semantic_evidence` provides query columns plus short
 literal statement/evidence JSON. Neither table stores a complete TDoc body.
+
+## V0.5 topic evidence
+
+`MeetingAuthority` preserves discovery meeting, optional authority meeting, raw title notation, basis, rule/version, and source TDoc. Only a recognized meeting-report title can resolve a different authority; `124b` is the explicit report-title alias of metadata form `124bis`.
+
+`DispositionEvidence` is subordinate to `AGREEMENT + MEETING` and contains `STUDY`, `ADOPT`, `SELECT`, `ENDORSE`, `REUSE`, `DEFER`, or `UNCLASSIFIED`, plus cue, rule, and span. `EvidenceContext` retains literal labelled nearby notes/conditions/exceptions/FFS with its own EvidenceRef; it is not SemanticEvidence. Literal TDoc links do not imply the referenced content.
+
+`TopicStudyRequest` supplies optional layer and provenance filters. `TopicEvidenceBundle` separates lexical candidates, organization-grouped contributions, meeting evidence, authority timeline, unresolved relationships, deterministic identity, and coverage. Schema, authority, disposition, and context are independently versioned.
+
+Local acceptance revisions use topic schema `2`, authority rules `meeting-authority-v1`, disposition rules `agreement-disposition-v2`, and context rules `evidence-context-v1`. Disposition and identifier matches point to the body span containing the literal cue (with character offsets for paragraph spans), rather than a preceding standalone Agreement label. Pending selection cues such as “to be selected” and “down-select from” remain UNCLASSIFIED; they do not establish a completed selection.
+
+On-demand study identity includes the logical bundle (excluding extraction timestamps), request, independent rule versions, and scoped semantic-state metadata/normalization identities and checksums. No topic cache or persistent study table exists. Changes to source content can change study identity even when V0.4 evidence IDs remain stable. Literal references to unrelated TDocs do not remove unresolved contribution relationships.

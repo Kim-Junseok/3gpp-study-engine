@@ -167,3 +167,7 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - V0.5 — Cross-meeting topic study
 - V0.6 — Company trend analysis
 - V1.0 — General RAN1/RAN2 research workflow
+
+## V0.5 offline topic evidence
+
+V0.5 adds deterministic offline topic studies over lexical and semantic evidence. `study-topic` keeps lexical candidates, contribution evidence, and authoritative meeting evidence separate while reporting local-corpus coverage. `inspect-meeting-authority` explains when a report discovered under one meeting records another. Both commands perform zero TDoc downloads. Agreement dispositions use explicit cues: an agreement to **study** is not adoption.

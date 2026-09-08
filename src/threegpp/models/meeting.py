@@ -36,6 +36,19 @@ def normalize_meeting_identifier(value: str | int) -> str:
     return number + (match.group("suffix") or "").lower()
 
 
+def normalize_report_meeting_identifier(value: str) -> str:
+    """Normalize a report-title identifier, including the explicit ``b`` alias.
+
+    The metadata convention remains authoritative.  ``124b`` is accepted only
+    in this narrowly scoped report-title adapter and reconciled to ``124bis``.
+    """
+    text = value.strip()
+    match = re.fullmatch(r"(?P<number>[0-9]+)b", text, re.IGNORECASE)
+    if match:
+        return normalize_meeting_identifier(match.group("number") + "bis")
+    return normalize_meeting_identifier(text)
+
+
 class Meeting(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

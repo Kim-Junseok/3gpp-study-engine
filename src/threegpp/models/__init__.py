@@ -17,7 +17,14 @@ from .evidence import (
     EvidenceSpan,
     SemanticEvidence,
 )
-from .meeting import Meeting, WorkingGroup, normalize_meeting_identifier
+from .meeting import (Meeting, WorkingGroup, normalize_meeting_identifier,
+                      normalize_report_meeting_identifier)
+from .topic import (
+    AgreementDisposition, ContextRole, DispositionEvidence, EvidenceContext,
+    EvidenceLink, EvidenceLinkType, MeetingAuthority, MeetingAuthorityBasis,
+    MeetingIdentity, MeetingTimelineEntry, TopicCoverage, TopicEvidenceBundle,
+    TopicEvidenceItem, TopicStudyRequest,
+)
 from .parse import SpreadsheetParseResult, SpreadsheetParseSummary
 from .query import TDocQuery
 from .source import ArtifactType, SourceArtifact
@@ -79,4 +86,9 @@ __all__ = [
     "TDocSearchHit",
     "merge_tdoc_metadata",
     "normalize_meeting_identifier",
+    "normalize_report_meeting_identifier",
+    "AgreementDisposition", "ContextRole", "DispositionEvidence", "EvidenceContext",
+    "EvidenceLink", "EvidenceLinkType", "MeetingAuthority", "MeetingAuthorityBasis",
+    "MeetingIdentity", "MeetingTimelineEntry", "TopicCoverage", "TopicEvidenceBundle",
+    "TopicEvidenceItem", "TopicStudyRequest",
 ]

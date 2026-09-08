@@ -100,3 +100,13 @@ is `explicit-structural-v2`, with stable individual rule IDs at version `1`.
 Meeting-record authority is member-scoped: normalized document/PDF members may
 emit meeting evidence, while bundled participant and TDoc-list spreadsheets remain
 searchable normalized data but cannot inherit meeting-report semantic authority.
+
+## V0.5 analytical layer
+
+```text
+Official raw evidence -> Normalized blocks -> EvidenceRef -> SemanticEvidence
+ -> authority meeting + disposition + bounded context -> TopicEvidenceBundle
+ -> evidence-grounded Skill synthesis
+```
+
+The core reads current normalized, indexed, and semantic derived state and never persists narrative synthesis. Timelines aggregate meeting outcomes by **authority meeting**, while retaining the metadata **discovery meeting**. Contribution evidence remains grouped only by stored source organization and is never promoted to a meeting outcome.

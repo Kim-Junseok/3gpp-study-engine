@@ -38,3 +38,12 @@ RAN meeting report may yield meeting-scope agreement, conclusion, decision, or F
 evidence; meeting evidence carries no company-position attribution. “We agree” or
 an “Agreement” label in a contribution is never promoted to a meeting agreement.
 Company proposal ≠ meeting agreement, and company conclusion ≠ meeting conclusion.
+
+## V0.5 synthesis guards
+
+- Discovery meeting is not necessarily authority meeting.
+- Agreement is not adoption. “Agreed to study X” must not be shortened to “agreed X”; “study X” must never be rendered as “adopt X”.
+- Context is not SemanticEvidence; absent bounded context does not prove no qualification exists elsewhere.
+- A company contribution is not a meeting outcome. Meeting-report metadata source organization must not become company attribution.
+- Similar wording is not proposal linkage. Only literal references are links.
+- Absence of explicit adoption evidence does not mean rejection.

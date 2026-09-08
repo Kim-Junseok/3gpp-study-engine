@@ -1,6 +1,6 @@
 ---
 name: 3gpp-study
-description: Build provenance-aware 3GPP RAN1/RAN2 studies and, only when explicitly requested, retrieve normalized passages or extract explicitly labeled proposal/agreement evidence through the Python core. Do not use for inferred positions, equivalence, synthesis, or trends.
+description: Build provenance-aware 3GPP studies and evidence-grounded topic summaries through the deterministic Python core. Never infer company stance, proposal equivalence, adoption, or trends.
 ---
 
 # 3GPP Study
@@ -46,3 +46,9 @@ stored organizations include that company. Only describe “RAN agreed X” for
 “we agree” wording is never a meeting agreement. Do not independently classify,
 paraphrase, infer support/opposition or company positions, cluster proposals, or
 synthesize cross-meeting trends.
+
+## V0.5 evidence-grounded topic answers
+
+Run `threegpp study-topic --query <query>` over already-local state. Structure the answer as: Topic; Relevant contribution evidence; Meeting-level evidence by authority meeting; What the meeting agreed to do; Relevant qualifications; What is not established; Coverage. Every technical statement must identify TDoc, member, kind/scope, authority meeting, EvidenceRef, and literal support.
+
+Treat `STUDY` as “the meeting agreed to study”, never adopted, selected, approved, or standardized. Inspect attached context and preserve limitations. No attached context does not establish that none exists. Organization grouping identifies contribution origin only, not stance. Similar contribution and meeting text without a literal link means relationship/adoption is **not established**, not adopted or rejected. Begin coverage-limited synthesis with “Within the currently normalized material”.
