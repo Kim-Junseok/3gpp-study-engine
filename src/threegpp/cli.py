@@ -145,6 +145,26 @@ def build_parser() -> argparse.ArgumentParser:
     from threegpp.models import EvidenceKind
     topic.add_argument("--kind", action="append", choices=[item.value for item in EvidenceKind])
     topic.add_argument("--limit", type=int, default=20)
+    for name, help_text in (
+        ("discover-chair-notes", "discover Chair Note snapshots; no body downloads"),
+        ("fetch-chair-note", "explicitly fetch and normalize one Chair Note snapshot"),
+        ("inspect-chair-note", "inspect a local Chair Note snapshot; no downloads"),
+        ("discussion-coverage", "find positive Chair Note discussion coverage; no downloads"),
+        ("plan-topic-corpus", "plan selective corpus expansion; no body downloads"),
+    ):
+        command = subparsers.add_parser(name, help=help_text)
+        _add_wg_meeting(command)
+        if name != "discover-chair-notes":
+            command.add_argument("--snapshot", required=name in {"fetch-chair-note", "inspect-chair-note"})
+        if name == "fetch-chair-note":
+            command.add_argument("--refresh", action="store_true", help="verify remote bytes; checksum conflicts fail")
+        if name in {"discussion-coverage", "plan-topic-corpus"}:
+            command.add_argument("--query", required=True)
+            command.add_argument("--include-metadata-candidates", action=argparse.BooleanOptionalAction, default=True)
+            command.add_argument("--limit", type=int, default=100)
+        if name == "plan-topic-corpus":
+            command.add_argument("--tdoc", action="append", help="explicit selection for an existing-format fetch plan")
+            command.add_argument("--fetch-plan", type=Path, help="write selected TDocs as a TDocFetchPlan YAML; never execute it")
     return parser
 
 
@@ -197,6 +217,39 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"discover-chair-notes", "fetch-chair-note", "inspect-chair-note",
+                        "discussion-coverage", "plan-topic-corpus"}:
+        from threegpp.chair_notes.service import ChairNoteService
+        from threegpp.chair_notes.coverage import DiscussionCoverageService
+        from threegpp.chair_notes.models import DiscussionCoverageRequest
+
+        chairs = ChairNoteService(args.data_dir)
+        if args.command == "discover-chair-notes":
+            source = source_for(args.wg)
+            try:
+                _json(chairs.discover(source, args.meeting))
+            finally:
+                source.close()
+        elif args.command == "fetch-chair-note":
+            _json(chairs.fetch(args.wg, args.meeting, args.snapshot, refresh=args.refresh))
+        elif args.command == "inspect-chair-note":
+            _json(chairs.inspect(args.wg, args.meeting, args.snapshot))
+        else:
+            with MetadataRepository(args.db) as repository:
+                service = DiscussionCoverageService(repository, args.data_dir)
+                request = DiscussionCoverageRequest(working_group=args.wg, meeting=args.meeting,
+                    query=args.query, chair_note_snapshot=args.snapshot,
+                    include_metadata_candidates=args.include_metadata_candidates, limit=args.limit)
+                if args.command == "discussion-coverage":
+                    _json(service.build_coverage(request))
+                else:
+                    if bool(args.tdoc) != bool(args.fetch_plan):
+                        raise ValueError("--tdoc and --fetch-plan must be supplied together")
+                    plan = service.plan_topic_corpus(request)
+                    if args.fetch_plan:
+                        service.compile_fetch_plan(plan, args.tdoc).to_yaml(args.fetch_plan)
+                    _json(plan)
+        return 0
     if args.command in {"inspect-meeting-authority", "study-topic"}:
         from threegpp.models import TopicStudyRequest
         from threegpp.topic import TopicStudyService

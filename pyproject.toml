@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "3gpp-study-engine"
-version = "0.5.0"
-description = "Provenance-first topic studies and explicit meeting evidence for 3GPP material"
+version = "0.6.0"
+description = "Provenance-first Chair Note coverage and topic studies for 3GPP material"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

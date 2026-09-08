@@ -1,10 +1,10 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.4 adds deterministic extraction of explicitly marked semantic evidence from normalized blocks.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.6 adds deterministic Chair Note discussion coverage and selective topic-corpus planning without changing the accepted evidence-authority hierarchy.
 
 ## Milestone status
 
-**Current development milestone: V0.4 explicit proposal/agreement evidence extraction.**
+**Current development milestone: V0.6 Chair Note guided discussion coverage.**
 
 ```text
 3GPP meeting
@@ -165,9 +165,27 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - V0.3 — Metadata and full-text retrieval
 - V0.4 — Proposal/agreement evidence extraction
 - V0.5 — Cross-meeting topic study
-- V0.6 — Company trend analysis
+- V0.6 — Chair Note guided discussion coverage and topic-corpus expansion planning
+- V0.7 — Proposition linkage and cross-company/cross-meeting analysis
 - V1.0 — General RAN1/RAN2 research workflow
 
 ## V0.5 offline topic evidence
 
 V0.5 adds deterministic offline topic studies over lexical and semantic evidence. `study-topic` keeps lexical candidates, contribution evidence, and authoritative meeting evidence separate while reporting local-corpus coverage. `inspect-meeting-authority` explains when a report discovered under one meeting records another. Both commands perform zero TDoc downloads. Agreement dispositions use explicit cues: an agreement to **study** is not adoption.
+
+## V0.6 Chair Note discussion coverage
+
+V0.6 treats Chair Notes as first-class, snapshot-specific artifacts. `discover-chair-notes` records the exact advertised `Inbox/Chair_notes` or `Inbox/Chair_Notes` directory and filenames without fetching bytes. `fetch-chair-note` is the only Chair Note command that performs explicit Chair Note acquisition; it stores immutable raw bytes under `data/raw/chair-notes/`, reuses the existing safe package inspection and DOCX/PDF/XLS/XLSX/text parsers, and writes checksum-bound normalized blocks under `data/normalized/chair-notes/`.
+
+`discussion-coverage` lexically locates bounded structural sections, extracts only literal R1/R2 TDoc identifiers, and joins them to official metadata. `plan-topic-corpus` reports local/index/semantic state and can compile an explicitly selected, fetch-eligible subset into the existing `TDocFetchPlan`. Discovery, inspection, coverage, and planning never execute contribution-body fetches.
+
+The authority hierarchy is explicit:
+
+```text
+Official TDoc List     = meeting document universe and TDoc metadata
+Selected Chair Note   = positive discussion association only
+Contribution TDoc     = company proposal/observation/conclusion evidence
+Meeting report/minutes = meeting agreement/decision/conclusion authority
+```
+
+Chair-note-confirmed references are positive evidence that the selected Chair Note associates a TDoc with the recorded discussion context. Absence from the selected Chair Note snapshot is not proof that a TDoc was not discussed. Chair Note text—including text labelled `Agreement:`—is never promoted to V0.4/V0.5 meeting SemanticEvidence.

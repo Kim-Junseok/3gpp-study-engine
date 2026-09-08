@@ -110,3 +110,20 @@ Official raw evidence -> Normalized blocks -> EvidenceRef -> SemanticEvidence
 ```
 
 The core reads current normalized, indexed, and semantic derived state and never persists narrative synthesis. Timelines aggregate meeting outcomes by **authority meeting**, while retaining the metadata **discovery meeting**. Contribution evidence remains grouped only by stored source organization and is never promoted to a meeting outcome.
+
+## V0.6 Chair Note coverage layer
+
+```text
+Official TDoc List -> Chair Note snapshots -> bounded topic sections
+ -> literal TDoc references -> positive discussion coverage
+ -> topic corpus expansion plan -> existing selective TDoc fetch
+ -> normalization -> lexical evidence -> SemanticEvidence -> TopicEvidenceBundle
+```
+
+`DirectorySource.discover_chair_notes` examines only the meeting's advertised `Inbox` and recognized case-insensitive Chair Note directory name. It preserves the exact directory URL and performs directory discovery only. Chair Note bytes are acquired separately by `ChairNoteService.fetch`; immutable raw files, slim receipts, and content-bound normalized blocks occupy Chair Note-specific runtime paths. Package inspection, parser selection, block shape, and checksum-conflict behavior reuse the document layer.
+
+Every normalized block locator is a `ChairNoteRef` bound to a snapshot ID, normalization ID, normalized checksum, member, block, structure, and optional page/sheet/row/cell/character coordinates. Resolution revalidates raw and normalized checksums, current parser/schema identity, block identity, and coordinates. Coverage is computed on demand, so rule or metadata changes produce new deterministic identities rather than reusing stale associations.
+
+Prose associations are bounded by heading, member, table, and a 200-block safety cap. Unheaded text and text-native PDF pages remain block-local; table associations remain row-local. These conservative boundaries prefer missing an association to leaking references from unrelated sections.
+
+Chair Note coverage never writes SemanticEvidence and never calls `DocumentService.execute`. An explicit selection may be compiled through `FetchPlanner` into the accepted `TDocFetchPlan`; executing that plan remains a separate user action.

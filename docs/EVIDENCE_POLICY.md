@@ -47,3 +47,13 @@ Company proposal ≠ meeting agreement, and company conclusion ≠ meeting concl
 - A company contribution is not a meeting outcome. Meeting-report metadata source organization must not become company attribution.
 - Similar wording is not proposal linkage. Only literal references are links.
 - Absence of explicit adoption evidence does not mean rejection.
+
+## V0.6 Chair Note authority
+
+The official TDoc List defines the meeting document universe and official metadata. A selected Chair Note provides positive evidence only that it explicitly associates a referenced TDoc with the bounded recorded discussion context. Contribution bodies remain authoritative for company statements, while accepted reports/minutes remain authoritative for meeting agreements and decisions.
+
+Chair-note-confirmed references are positive evidence that the selected Chair Note associates a TDoc with the recorded discussion context. Absence from the selected Chair Note snapshot is not proof that a TDoc was not discussed. `METADATA_RELEVANT_ONLY` means that metadata matched the topic but no positive association was extracted from this selected snapshot; it never means `NOT_DISCUSSED`.
+
+Chair Note wording, including an `Agreement:` label, remains literal discussion/context source text and cannot become `AGREEMENT + MEETING`, `DECISION + MEETING`, or `CONCLUSION + MEETING` through the Chair Note path. Similar titles, organizations, and technical wording cannot create TDoc associations. Associations require a literal R1/R2 identifier inside a bounded matched section, with an exact `ChairNoteRef` and structural basis.
+
+Each snapshot remains independent. EOM naming does not assert finality, snapshots are not silently unioned, and a later absence does not establish withdrawal. Unresolved references retain their literal identifier and source locator without fabricated title, organization, URL, availability, or meeting.

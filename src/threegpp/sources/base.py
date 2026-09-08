@@ -40,6 +40,10 @@ class ThreeGPPSource(ABC):
     @abstractmethod
     def get_tdoc(self, meeting: str, tdoc_id: str) -> TDocMetadata: ...
 
+    def discover_chair_notes(self, meeting: str):
+        """Discover snapshots only; fetching their bytes is a separate action."""
+        raise SourceError("Chair Note discovery is not supported by this source")
+
 
 class DirectorySource(ThreeGPPSource):
     BASE_URL = "https://www.3gpp.org/ftp/tsg_ran/"
@@ -201,6 +205,31 @@ class DirectorySource(ThreeGPPSource):
 
     def get_agenda(self, meeting: str) -> list[SourceArtifact]:
         return self._artifacts_from_named_directories(meeting, ["Agenda"], ArtifactType.AGENDA)
+
+    def discover_chair_notes(self, meeting: str):
+        from threegpp.chair_notes.rules import CHAIR_NOTE_DIRECTORY_NAMES, discovered_snapshot
+        from threegpp.models import normalize_meeting_identifier
+
+        meeting = normalize_meeting_identifier(meeting)
+        now = datetime.now(UTC)
+        snapshots = {}
+        for name, inbox_url in self._meeting_links(meeting):
+            if name.casefold() != "inbox":
+                continue
+            for directory_name, directory_url in self._links(inbox_url):
+                if directory_name.casefold() not in CHAIR_NOTE_DIRECTORY_NAMES:
+                    continue
+                for _, file_url in self._directory_files(directory_url):
+                    path = urlparse(file_url).path
+                    # Only direct files in the advertised directory, never nested crawls.
+                    if path.endswith("/") or not PurePosixPath(path).suffix:
+                        continue
+                    if PurePosixPath(path).parent != PurePosixPath(urlparse(directory_url).path):
+                        continue
+                    snapshot = discovered_snapshot(self.working_group, meeting, file_url,
+                                                   directory_url, now)
+                    snapshots[snapshot.snapshot_id] = snapshot
+        return sorted(snapshots.values(), key=lambda item: str(item.artifact.official_url))
 
     def get_meeting_report(self, meeting: str) -> list[SourceArtifact]:
         return self._artifacts_from_named_directories(

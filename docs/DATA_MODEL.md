@@ -83,3 +83,17 @@ literal statement/evidence JSON. Neither table stores a complete TDoc body.
 Local acceptance revisions use topic schema `2`, authority rules `meeting-authority-v1`, disposition rules `agreement-disposition-v2`, and context rules `evidence-context-v1`. Disposition and identifier matches point to the body span containing the literal cue (with character offsets for paragraph spans), rather than a preceding standalone Agreement label. Pending selection cues such as “to be selected” and “down-select from” remain UNCLASSIFIED; they do not establish a completed selection.
 
 On-demand study identity includes the logical bundle (excluding extraction timestamps), request, independent rule versions, and scoped semantic-state metadata/normalization identities and checksums. No topic cache or persistent study table exists. Changes to source content can change study identity even when V0.4 evidence IDs remain stable. Literal references to unrelated TDocs do not remove unresolved contribution relationships.
+
+## V0.6 Chair Note and coverage models
+
+`ChairNoteArtifact` preserves working group, meeting, official URL/filename, exact source directory, deterministic artifact ID, discovery time, and rule version. `ChairNoteSnapshot` adds deterministic snapshot ID, raw label, conservative role, raw retrieval/checksum, parser and normalization identity, normalized checksum/path, extraction status, block count, and literal-reference count. Multiple snapshot receipts and outputs coexist under their snapshot IDs. `EOM` is distinct from `EXPLICIT_FINAL`; conflicting or missing labels are `UNKNOWN`.
+
+`ChairNoteRef` is separate from TDoc-only `EvidenceRef`. It identifies one snapshot normalization, member, block, heading/page/sheet, optional table row/cell, and optional character span. A stale checksum, parser/schema identity, missing block, or mismatched coordinates makes the reference unresolvable.
+
+`DiscussionSection` contains literal topic anchors, heading path, bounded start/end refs, block count, and referenced identifiers. `DiscussionRecord` binds a topic anchor to one literal `TDocReference` with `SAME_BLOCK`, `SAME_TABLE_ROW`, or `SAME_DISCUSSION_SECTION` basis and versioned rules.
+
+`TopicDiscussionCoverage` separates `CHAIR_NOTE_CONFIRMED`, `METADATA_RELEVANT_ONLY`, and unresolved/ambiguous references. Resolution distinguishes current-meeting metadata, other-known metadata, unresolved identity, and ambiguous multi-meeting identity. Unknown fields remain null; no current-meeting identity is invented.
+
+`TopicCorpusExpansionPlan` retains official metadata, availability, ChairNoteRefs, association basis, raw/checksum state, normalization, index and semantic states, fetch need/eligibility, and reason. Only explicitly selected `DOWNLOADABLE` items may compile to the existing `TDocFetchPlan`; compilation revalidates the deterministic plan identity.
+
+Versions are independent: Chair Note schema `1`, discovery `chair-note-discovery-v1`, snapshot interpretation `chair-note-snapshot-v1`, discussion sections `discussion-section-v1`, TDoc references `tdoc-reference-v1`, and corpus expansion schema `1`.

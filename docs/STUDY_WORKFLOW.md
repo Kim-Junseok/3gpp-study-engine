@@ -59,3 +59,19 @@ After documents are normalized, indexed, and semantically extracted, run `threeg
 Context examines at most three immediately following blocks in the same member and heading path, accepts only explicit labels, and stops at an unlabelled block or heading. Incomplete studies must be phrased as “within the currently normalized material”.
 
 Coverage counts are scoped to working-group and discovery-meeting filters, before topic and evidence-level filters. `documents_indexable` counts stored INDEXED states; `meeting_reports_available` counts role-classified extraction states. These are local processing diagnostics, not a complete meeting inventory. Semantic candidate scanning is currently bounded to 5000 fresh records; lexical retrieval has its own result limit. Results are capped per contribution organization and per authority meeting, and semantic truncation is reported. An unresolved-authority group is separately bounded. These limits can omit relevant material.
+
+## Chair Note guided corpus expansion
+
+Use this order for a meeting/topic whose contribution bodies are incomplete:
+
+1. Ingest or inspect the official TDoc List to establish the metadata universe.
+2. Run `discover-chair-notes --wg <WG> --meeting <ID>` to record advertised snapshots. This fetches directory listings, not Chair Note or TDoc bodies.
+3. Select a snapshot explicitly when more than one non-unique-final candidate exists. Run `fetch-chair-note` for that snapshot; this is the separate explicit Chair Note acquisition boundary.
+4. Inspect its checksum-bound blocks with `inspect-chair-note`.
+5. Run `discussion-coverage --query <terms>` and review matched sections, exact `ChairNoteRef`s, confirmed references, metadata-only candidates, unresolved references, diagnostics, and limitations.
+6. Run `plan-topic-corpus` to review reuse, downloadable, listed-only, unknown, and unresolved states. Supplying both `--tdoc` and `--fetch-plan` compiles only those explicit eligible selections to the existing fetch-plan YAML; it does not execute the plan.
+7. Execute `fetch-tdocs` separately, then normalize/index/extract and use the V0.5 topic-study workflow.
+
+Discovery, inspection, coverage, corpus planning, and topic study cause zero contribution-body downloads. An explicitly final snapshot may be selected only when unique; a single non-final snapshot may be selected as the only available artifact without asserting finality. Ambiguous snapshot sets require an explicit snapshot ID.
+
+Report confirmed references as “explicitly associated with the matched topic in the selected Chair Note snapshot.” Never describe them as the only contributions discussed. Chair Note absence is not negative evidence, Chair Note completeness is not assumed, and Chair Note `Agreement:` text does not carry meeting-agreement authority.
