@@ -10,14 +10,18 @@ from urllib.parse import unquote, urlparse
 
 from .models import ChairNoteArtifact, ChairNoteSnapshot, ChairNoteSnapshotRole
 
-CHAIR_NOTE_SCHEMA_VERSION = "1"
+CHAIR_NOTE_SCHEMA_VERSION = "2"
 CHAIR_NOTE_DISCOVERY_RULESET_VERSION = "chair-note-discovery-v1"
 CHAIR_NOTE_SNAPSHOT_RULESET_VERSION = "chair-note-snapshot-v1"
-DISCUSSION_SECTION_RULESET_VERSION = "discussion-section-v1"
-TDOC_REFERENCE_RULESET_VERSION = "tdoc-reference-v1"
+DISCUSSION_SECTION_RULESET_VERSION = "discussion-section-v3"
+TDOC_REFERENCE_RULESET_VERSION = "tdoc-reference-v2"
 CORPUS_EXPANSION_SCHEMA_VERSION = "1"
 CHAIR_NOTE_DIRECTORY_NAMES = frozenset({"chair_notes"})
-TDOC_REFERENCE = re.compile(r"(?<![\w-])R[12]-[0-9]{6,8}(?![\w-])", re.I)
+# Real Chair Notes commonly concatenate a TDoc number and its title in a table
+# cell (for example ``R1-2605236HARQ related aspects``).  A following letter is
+# therefore a valid title boundary.  Still reject another digit or a hyphen so
+# a prefix of a longer/malformed identifier cannot be accepted.
+TDOC_REFERENCE = re.compile(r"(?<![\w-])R[12]-[0-9]{6,8}(?![0-9-])", re.I)
 SNAPSHOT_LABEL = re.compile(r"(?<![a-z0-9])(?:final|eom\d*|rev(?:ision)?\d*)(?![a-z0-9])", re.I)
 MAX_SECTION_BLOCKS = 200
 COMPLETENESS_LIMITATION = (

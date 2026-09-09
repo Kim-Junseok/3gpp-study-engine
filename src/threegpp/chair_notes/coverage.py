@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -25,7 +26,22 @@ from .service import ChairNoteService, cell_text, make_ref
 
 
 def _anchor(snapshot, block, text, tokens, row=None, cell=None):
-    terms = sorted(tokens & set(tokenize(text)))
+    # Word-table extraction can concatenate the TDoc identifier and title.
+    # Insert a lexical boundary for matching while retaining the exact source
+    # text and character locator in the TopicAnchor.
+    lexical_text = rules.TDOC_REFERENCE.sub(lambda match: match.group(0) + ' ', text)
+    matched = tokens & set(tokenize(lexical_text))
+    # The same extraction can concatenate an acronym at the end of a title
+    # with an uppercase organization abbreviation (``HARQKT``).  Recover only
+    # an explicit uppercase acronym at a non-word start; do not apply general
+    # substring matching.
+    for token in tokens - matched:
+        acronym = token.upper()
+        if len(acronym) >= 3 and re.search(
+            rf'(?<![A-Za-z0-9]){re.escape(acronym)}(?=[A-Z])', lexical_text
+        ):
+            matched.add(token)
+    terms = sorted(matched)
     if not terms:
         return None
     return TopicAnchor(source_ref=make_ref(snapshot, block, row=row, cell=cell, start=0, end=len(text)),

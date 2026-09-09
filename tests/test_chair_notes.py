@@ -54,6 +54,38 @@ def test_filename_roles_do_not_infer_finality(filename, label, role):
     assert first == snapshot(filename)
 
 
+def test_tdoc_reference_accepts_title_concatenated_after_identifier():
+    from threegpp.chair_notes import rules
+    from threegpp.chair_notes.coverage import discussion_sections
+    from threegpp.documents.models import ContentBlock
+
+    text = 'R1-2605236HARQ related aspects'
+    assert [match.group(0) for match in rules.TDOC_REFERENCE.finditer(text)] == ['R1-2605236']
+    assert not rules.TDOC_REFERENCE.search('R1-260523678HARQ')
+    item = snapshot()
+    item = item.model_copy(update={
+        'normalization_id': 'a' * 64,
+        'normalized_checksum': 'b' * 64,
+    })
+    blocks = [
+        ContentBlock(
+            block_id='b000001', type='paragraph', text=text,
+            member_filename='chair.docx', order=1,
+        ),
+        ContentBlock(
+            block_id='b000002', type='paragraph',
+            text='R1-2605858On 6GR HARQKT Corp.',
+            member_filename='chair.docx', order=2,
+        ),
+    ]
+    sections, records, truncated = discussion_sections(item, blocks, 'HARQ')
+    assert len(sections) == 2 and len(records) == 2 and truncated == 0
+    assert [record.reference.tdoc_id for record in records] == [
+        'R1-2605236', 'R1-2605858',
+    ]
+    assert records[0].topic_anchor.literal_text == text
+
+
 import io
 import json
 import zipfile
@@ -323,7 +355,7 @@ def test_parser_and_schema_changes_invalidate_refs(chair_store,monkeypatch):
     assert (service.root/s.normalized_path).exists()
     with pytest.raises(ValueError,match='stale'):
         service.resolve_ref(ref)
-    monkeypatch.setattr(rules,'CHAIR_NOTE_SCHEMA_VERSION','2')
+    monkeypatch.setattr(rules,'CHAIR_NOTE_SCHEMA_VERSION','3')
     with pytest.raises(ValueError,match='stale'):
         service.load_blocks('RAN1','126',s.snapshot_id)
     third=service.fetch('RAN1','126',s.snapshot_id)
