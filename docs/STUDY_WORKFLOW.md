@@ -1,5 +1,13 @@
 # Study workflow
 
+## Historical meeting-range coverage
+
+Prepare official Chair Note snapshots and TDoc-list metadata independently, then run `historical-discussion-coverage` for an explicit bounded range. Repeated `--snapshot MEETING=SNAPSHOT_ID` options resolve V0.6 selection ambiguity. Missing inventories, ambiguous snapshots, and unnormalized selections remain visible for one meeting while other meetings continue.
+
+Review source completeness, meeting order, selected snapshot, positive sections, metadata resolution, metadata-only candidates, unresolved/ambiguous candidates, and local body state. `COMPLETE_FOR_SELECTED_SOURCES` is a source statement only. Always state that absence from a selected Chair Note is not evidence that the topic or TDoc was not discussed.
+
+Use `plan-historical-corpus` to identify exact missing bodies. One body may carry many meeting/anchor edges, and batches contain at most 50 eligible TDocs. `--batch N --fetch-plan path.yaml` only compiles the chosen batch. Fetching, indexing, and semantic extraction remain later explicit steps. Present coverage chronology, not proposition evolution; V0.8 owns future proposition linkage and technical synthesis.
+
 1. Express the task as a validated `StudyRequest` YAML.
 2. Query a candidate inventory to identify locally available and missing meetings.
 3. Discover missing meetings with safe default ingestion.

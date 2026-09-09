@@ -165,6 +165,35 @@ def build_parser() -> argparse.ArgumentParser:
         if name == "plan-topic-corpus":
             command.add_argument("--tdoc", action="append", help="explicit selection for an existing-format fetch plan")
             command.add_argument("--fetch-plan", type=Path, help="write selected TDocs as a TDocFetchPlan YAML; never execute it")
+    historical_resolve = subparsers.add_parser(
+        "historical-metadata-resolve",
+        help="resolve a TDoc against canonical-current and stored official historical metadata",
+    )
+    _add_wg(historical_resolve)
+    historical_resolve.add_argument("--tdoc", required=True)
+    historical_resolve.add_argument("--meeting", required=True,
+                                    help="expected historical metadata meeting; aliases are accepted")
+    historical_resolve.add_argument("--discussion-meeting",
+                                    help="optional meeting whose Chair Note contains the reference")
+    for name, help_text in (
+        ("historical-discussion-coverage", "build bounded offline meeting-range Chair Note coverage"),
+        ("plan-historical-corpus", "plan missing historical contribution bodies; never download"),
+    ):
+        command = subparsers.add_parser(name, help=help_text)
+        _add_wg(command)
+        command.add_argument("--from-meeting", required=True)
+        command.add_argument("--to-meeting", required=True)
+        command.add_argument("--query", required=True)
+        command.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID",
+                             help="request-scoped explicit Chair Note snapshot selection")
+        command.add_argument("--include-metadata-candidates", action=argparse.BooleanOptionalAction,
+                             default=True)
+        command.add_argument("--limit", type=int, default=100)
+        command.add_argument("--max-meetings", type=int, default=24)
+        if name == "plan-historical-corpus":
+            command.add_argument("--batch", type=int, help="compile one 1-based eligible batch")
+            command.add_argument("--fetch-plan", type=Path,
+                                 help="write an existing-format TDocFetchPlan YAML; never execute")
     return parser
 
 
@@ -217,6 +246,41 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"historical-metadata-resolve", "historical-discussion-coverage",
+                        "plan-historical-corpus"}:
+        from threegpp.historical import (
+            HistoricalCoverageRequest, HistoricalCoverageService, HistoricalMetadataResolver,
+        )
+        with MetadataRepository(args.db) as repository:
+            if args.command == "historical-metadata-resolve":
+                _json(HistoricalMetadataResolver(repository).resolve(
+                    args.wg, args.tdoc, discussion_meeting=args.discussion_meeting,
+                    expected_meeting=args.meeting))
+                return 0
+            snapshots = {}
+            for value in args.snapshot:
+                if "=" not in value:
+                    raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+                meeting, snapshot_id = value.split("=", 1)
+                if not meeting or not snapshot_id:
+                    raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+                snapshots[meeting] = snapshot_id
+            request = HistoricalCoverageRequest(working_group=args.wg,
+                from_meeting=args.from_meeting, to_meeting=args.to_meeting, query=args.query,
+                chair_note_snapshots=snapshots,
+                include_metadata_candidates=args.include_metadata_candidates,
+                limit_per_meeting=args.limit, max_meetings=args.max_meetings)
+            service = HistoricalCoverageService(repository, args.data_dir)
+            if args.command == "historical-discussion-coverage":
+                _json(service.build_coverage(request))
+            else:
+                if bool(args.batch) != bool(args.fetch_plan):
+                    raise ValueError("--batch and --fetch-plan must be supplied together")
+                plan = service.plan_corpus(request)
+                if args.fetch_plan:
+                    service.compile_fetch_plan(plan, args.batch).to_yaml(args.fetch_plan)
+                _json(plan)
+        return 0
     if args.command in {"discover-chair-notes", "fetch-chair-note", "inspect-chair-note",
                         "discussion-coverage", "plan-topic-corpus"}:
         from threegpp.chair_notes.service import ChairNoteService

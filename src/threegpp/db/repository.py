@@ -331,6 +331,42 @@ class MetadataRepository:
         ).fetchall()
         return [TDocMetadata.model_validate_json(row[0]) for row in rows]
 
+    def find_tdoc_snapshot_candidates(
+        self, working_group: WorkingGroup | str, tdoc_id: str
+    ) -> list[tuple[TDocListSnapshot, TDocMetadata]]:
+        """Return every stored official snapshot row for a TDoc with source provenance.
+
+        This deliberately does not alter or fall back from the canonical-current
+        metadata view.  Historical consumers must apply an explicit resolution
+        policy to these candidates.
+        """
+        group = WorkingGroup.parse(working_group)
+        rows = self.connection.execute(
+            """SELECT s.source_url, r.tdoc_json
+               FROM tdoc_snapshot_records r
+               JOIN tdoc_list_snapshots s ON s.source_url = r.snapshot_url
+               WHERE s.working_group = ? AND upper(r.tdoc_id) = upper(?)
+               ORDER BY s.meeting_number, s.snapshot_timestamp NULLS LAST, s.source_url""",
+            [group.value, tdoc_id],
+        ).fetchall()
+        result = []
+        for snapshot_url, tdoc_json in rows:
+            snapshot = self.get_tdoc_list_snapshot(snapshot_url)
+            if snapshot is not None:
+                result.append((snapshot, TDocMetadata.model_validate_json(tdoc_json)))
+        return result
+
+    def list_known_meetings(self, working_group: WorkingGroup | str) -> list[str]:
+        """List locally represented meeting identifiers without network access."""
+        group = WorkingGroup.parse(working_group)
+        rows = self.connection.execute(
+            """SELECT meeting_number FROM meetings WHERE working_group = ?
+               UNION SELECT meeting_number FROM tdoc_metadata WHERE working_group = ?
+               UNION SELECT meeting_number FROM tdoc_list_snapshots WHERE working_group = ?""",
+            [group.value, group.value, group.value],
+        ).fetchall()
+        return sorted({row[0] for row in rows})
+
     def list_tdocs(self, working_group: WorkingGroup | str, meeting: str) -> list[TDocMetadata]:
         return self.query_tdocs(
             TDocQuery(

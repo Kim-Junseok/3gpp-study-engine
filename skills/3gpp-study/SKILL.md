@@ -5,6 +5,14 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.7 historical meeting coverage
+
+For an explicit historical range, use `historical-discussion-coverage --wg <WG> --from-meeting <ID> --to-meeting <ID> --query <terms>`. If a meeting has ambiguous snapshots, report `SNAPSHOT_SELECTION_REQUIRED` and use an explicit `--snapshot MEETING=SNAPSHOT_ID` only when supplied or selected by the user. Preserve raw meeting notation and source provenance when the core aliases `124b` to `124bis`.
+
+Report each meeting's selected source, Chair-note-confirmed references, metadata-only candidates, historical resolution, unresolved/ambiguous references, local bodies, and fetch-needed counts. State that coverage is positive evidence from selected sources and absence is not negative evidence. A later Chair Note reference to an older TDoc does not establish continuity or adoption.
+
+Use `plan-historical-corpus` for missing bodies and preserve all `ChairNoteRef` edges for deduplicated items. `--batch` plus `--fetch-plan` may compile one bounded batch but does not execute it. Keep discussion coverage, metadata resolution, corpus availability, unresolved references, and limitations separate. Safe wording is: “The selected Chair Note associates TDoc R1-… authored by Company X with the requested topic section.” V0.7 cannot support company stance, proposal equivalence, agreement linkage, cross-company comparison, proposition evolution, consensus, or trend wording.
+
 Turn the user's working groups, meetings, topics, organizations, and questions into the repository's canonical `StudyRequest`. Use [resources/study-request.example.yaml](resources/study-request.example.yaml) as the shape, validate it with `StudyRequest.from_yaml`, and preserve explicit meeting suffixes such as `bis`.
 
 Use the Python core as the source of truth. The CLI is a thin operational interface:

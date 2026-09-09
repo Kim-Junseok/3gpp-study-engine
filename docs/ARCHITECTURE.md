@@ -1,5 +1,22 @@
 # Architecture
 
+## V0.7 historical range layer
+
+```text
+explicit meeting range
+ -> V0.6 per-meeting Chair Note coverage
+ -> canonical-current + stored official snapshot metadata resolver
+ -> HistoricalTopicCoverage
+ -> HistoricalCorpusExpansionPlan
+ -> existing TDocFetchPlan
+```
+
+`threegpp.historical` is offline. Its versioned meeting adapter maps `b` to `bis` only as identifier normalization and preserves raw notation. Numeric suffix ordering gives `124 < 124bis < 125`; explicit ranges have a configurable meeting-count bound and insert only locally known suffixed meetings.
+
+The resolver reads canonical-current records before stored official list snapshots. A current exact record wins over a historical duplicate. Incompatible candidates at the same precedence tier yield `AMBIGUOUS` with every candidate. Snapshot candidates retain URL, checksum, role, timestamp, and exact metadata; canonical-current state is unchanged.
+
+Missing Chair Notes, unnormalized snapshots, and ambiguous selection are isolated to one meeting. Completeness describes selected source coverage only. Corpus planning deduplicates resolved bodies while retaining cross-meeting discussion edges and can compile a batch to `TDocFetchPlan`. It never executes acquisition, indexing, or semantic extraction. V0.8 proposition linkage and technical synthesis are outside this layer.
+
 ## Stable boundaries
 
 V0.2a.3 preserves the accepted boundaries:

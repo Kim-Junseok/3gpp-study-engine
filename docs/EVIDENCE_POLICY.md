@@ -1,5 +1,15 @@
 # Evidence policy
 
+## V0.7 historical boundaries
+
+- Historical resolution adds official metadata provenance; it does not add discussion evidence. `METADATA_RELEVANT_ONLY` remains separate from `CHAIR_NOTE_CONFIRMED`.
+- `124b -> 124bis` is identifier equivalence only. It does not make snapshots identical or assign authority.
+- Chair Note meeting and TDoc metadata meeting remain separate. A later Chair Note reference establishes only that the selected later snapshot references the older TDoc.
+- Such a reference does not establish continuity, continuing activity, acceptance, or an ongoing meeting outcome.
+- Missing sources produce limitations, never a fabricated zero-discussion conclusion.
+- Organization values and historical URLs come only from official metadata. Listed-only URLs are never synthesized.
+- Historical coverage is lexical and structural. It performs no semantic similarity, proposal equivalence, company stance, consensus, or trend inference.
+
 Discovery and byte retrieval are different events. A discovered-only artifact has `discovered_at` but null `retrieved_at`, `local_path`, and `checksum`. An actual download sets all three retrieval fields. The model rejects partial retrieval provenance.
 
 Raw source bytes are immutable. A URL returning bytes that conflict with an existing local checksum raises an error instead of overwriting the file. Normalized metadata, manifests, and future extracted content remain separate from raw bytes.

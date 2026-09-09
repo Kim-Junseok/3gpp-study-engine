@@ -1,5 +1,13 @@
 # Data model
 
+## V0.7 historical coverage
+
+`MeetingAlias` stores working group, normalized identifier, raw notation, alias source, and ruleset version. `HistoricalMetadataCandidate` pairs exact `TDocMetadata` with its source layer and, for archived rows, official snapshot URL, checksum, roles, and timestamp. `HistoricalMetadataResolution` records discussion meeting and expected metadata meeting separately, its state, selection, every inspected candidate, basis, and resolver version.
+
+`HistoricalCoverageRequest` requires one working group, inclusive start/end meetings, a lexical query, optional per-meeting snapshot IDs, limits, and a range bound. `HistoricalTopicCoverage` contains ordered per-meeting wrappers around unchanged V0.6 `TopicDiscussionCoverage`. Completeness is `COMPLETE_FOR_SELECTED_SOURCES`, `PARTIAL_SOURCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`; none asserts technical completeness.
+
+`HistoricalCorpusExpansionPlan` contains one item per resolved body identity. Each item retains all `HistoricalDiscussionEdge` values and their original `DiscussionRecord`/`ChairNoteRef`. Availability remains `DOWNLOADABLE`, `LISTED_ONLY`, or `UNKNOWN`. Eligible IDs are deterministically batched at the existing `FetchPlanner` limit. Derived identities cover requests, source-derived coverage, candidates, checksums, and independent V0.7 rule/schema versions.
+
 ## Provenance layers
 
 1. Directory discovery: TDoc identity and archive URL.

@@ -1,10 +1,22 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.6 adds deterministic Chair Note discussion coverage and selective topic-corpus planning without changing the accepted evidence-authority hierarchy.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.7 adds deterministic historical metadata resolution, bounded meeting-range Chair Note coverage, and historical corpus backfill planning without changing the accepted evidence-authority hierarchy.
+
+## V0.7 historical coverage
+
+V0.7 resolves literal Chair Note TDoc references against canonical-current metadata and stored official list snapshots. It preserves discussion meeting, metadata meeting, exact snapshot URL/checksum/role, and every ambiguity candidate. The versioned adapter accepts `124b`, `124bis`, `RAN1#124b`, and `RAN1#124bis` as the same identifier while preserving raw notation; aliases do not equate source artifacts or confer authority.
+
+```bash
+python -m threegpp.cli historical-metadata-resolve --wg RAN1 --meeting 124bis --tdoc R1-2603427
+python -m threegpp.cli historical-discussion-coverage --wg RAN1 --from-meeting 124bis --to-meeting 126 --query "HARQ Fast-ARQ"
+python -m threegpp.cli plan-historical-corpus --wg RAN1 --from-meeting 124bis --to-meeting 126 --query "HARQ Fast-ARQ"
+```
+
+Range coverage reuses V0.6 once per meeting. Missing sources and ambiguous snapshots remain per-meeting results. Corpus plans deduplicate exact contribution bodies, preserve every meeting and `ChairNoteRef` association, and split eligible items into existing fetch-plan batches of at most 50. These commands perform no acquisition, indexing, semantic extraction, proposition linkage, or stance inference.
 
 ## Milestone status
 
-**Current development milestone: V0.6 Chair Note guided discussion coverage.**
+**Current development milestone: V0.7 historical meeting coverage.**
 
 ```text
 3GPP meeting
@@ -166,7 +178,8 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - V0.4 — Proposal/agreement evidence extraction
 - V0.5 — Cross-meeting topic study
 - V0.6 — Chair Note guided discussion coverage and topic-corpus expansion planning
-- V0.7 — Proposition linkage and cross-company/cross-meeting analysis
+- V0.7 — Historical metadata resolution and meeting-range Chair Note coverage
+- V0.8 — Proposition linkage and cross-company/cross-meeting analysis
 - V1.0 — General RAN1/RAN2 research workflow
 
 ## V0.5 offline topic evidence

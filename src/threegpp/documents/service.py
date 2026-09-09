@@ -44,6 +44,21 @@ class FetchPlanner:
             items.append(FetchPlanItem(tdoc_id=record.tdoc_id, working_group=record.working_group, meeting=record.meeting, source_url=record.source_url, availability=record.availability, selection_reasons=[reason] if reason else []))
         return TDocFetchPlan(items=items, automatic_batch_limit=self.batch_limit)
 
+    def explicit_records(self, records, *, reason: str | None = None) -> TDocFetchPlan:
+        """Compile already-resolved official metadata, including archived snapshots.
+
+        The caller owns resolution and provenance.  This method only translates
+        exact records into the existing fetch-plan contract and never executes it.
+        """
+        if not records or len(records) > self.batch_limit:
+            raise ValueError(f"select 1..{self.batch_limit} TDocs per fetch plan")
+        items = [FetchPlanItem(tdoc_id=record.tdoc_id, working_group=record.working_group,
+                              meeting=record.meeting, source_url=record.source_url,
+                              availability=record.availability,
+                              selection_reasons=[reason] if reason else [])
+                 for record in records]
+        return TDocFetchPlan(items=items, automatic_batch_limit=self.batch_limit)
+
 
 class DocumentService:
     def __init__(
