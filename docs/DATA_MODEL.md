@@ -1,5 +1,33 @@
 # Data model
 
+## V0.8 explicit links
+
+`EvidenceNodeRef` identifies a TDoc metadata record, `SemanticEvidence`, `DiscussionRecord`, or literal meeting reference. It stores a stable node ID, working group, meeting, TDoc ID where applicable, source artifact and identity, and compact `SourceLocator` values. Locators contain `EvidenceRef`, `ChairNoteRef`, or metadata field provenance; nodes do not copy full source bodies.
+
+`ExplicitEvidenceLink` stores source and target nodes, literal basis, locator, discussion/source/metadata meetings, resolution state, deterministic confidence, and the independent link ruleset version. Its kinds are `SAME_TDOC`, `EXPLICIT_TDOC_REFERENCE`, `EXPLICIT_MEETING_REFERENCE`, `EXPLICIT_REPLY_REFERENCE`, `EXPLICIT_REVISION_REFERENCE`, `EXPLICIT_SUPERSESSION_REFERENCE`, and `DISCUSSION_REFERENCE`. `AgreementDisposition` is a separate optional field and never changes the link kind.
+
+`EvidenceLinkGraph` deduplicates nodes while retaining separate edges for separate source locators. It reports source identities, resolution coverage, structural counts, and `COMPLETE_FOR_AVAILABLE_EVIDENCE`, `PARTIAL_EVIDENCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`. Schema versions are explicit-link `1`, graph `1`, and preparation plan `1`; the initial ruleset is `explicit-link-v1`.
+
+For example:
+
+```text
+Chair Note RAN1#125 / ChairNoteRef
+  → DISCUSSION_REFERENCE "R1-2603427"
+  → TDoc metadata RAN1#124bis
+```
+
+The edge preserves both meeting roles and does not establish continuity. Similarly:
+
+```text
+Meeting Agreement / EvidenceRef
+  → EXPLICIT_TDOC_REFERENCE "R1-2601985"
+  → TDoc metadata
+```
+
+If the Agreement disposition is `ENDORSE`, the graph reports it beside the edge. It does not identify every contribution statement as endorsed.
+
+An unresolved literal reference remains an edge to an unresolved TDoc node. Multiple incompatible metadata records yield `AMBIGUOUS_REFERENCE`, retain candidate nodes, and prevent a definitive target. `LinkPreparationPlan` reports body, normalization, index, SemanticEvidence, and meeting-evidence gaps and always has `executes_actions=false`.
+
 ## V0.7 historical coverage
 
 `MeetingAlias` stores working group, normalized identifier, raw notation, alias source, and ruleset version. `HistoricalMetadataCandidate` pairs exact `TDocMetadata` with its source layer and, for archived rows, official snapshot URL, checksum, roles, and timestamp. `HistoricalMetadataResolution` records discussion meeting and expected metadata meeting separately, its state, selection, every inspected candidate, basis, and resolver version.

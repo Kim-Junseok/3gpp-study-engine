@@ -1,5 +1,15 @@
 # Evidence policy
 
+## V0.8 explicit-link policy
+
+An explicit TDoc reference establishes a document-level relationship. It does not automatically establish semantic equivalence between a meeting statement and every proposition in the referenced TDoc.
+
+`SAME_TDOC` states that contribution SemanticEvidence belongs to its recorded parent TDoc. `DISCUSSION_REFERENCE` states that the selected Chair Note explicitly references the TDoc in a bounded discussion context. Meeting evidence links require a literal identifier inside accepted meeting-report/minutes SemanticEvidence. A disposition remains attached to that meeting evidence and is not projected onto contribution evidence.
+
+Similar wording, a shared topic, one Chair Note section, or common authorship cannot create a link. Reply, revision, supersession, and cross-meeting continuity require literal source wording. An unresolved or ambiguous reference remains visible, and `NO_EXPLICIT_LINK` is not negative evidence.
+
+The link graph does not contain company stance, support/opposition, semantic proposition clusters, or trend scores. Chair Note text labelled `Agreement:` remains discussion context and never becomes meeting SemanticEvidence through linkage.
+
 ## V0.7 historical boundaries
 
 - Historical resolution adds official metadata provenance; it does not add discussion evidence. `METADATA_RELEVANT_ONLY` remains separate from `CHAIR_NOTE_CONFIRMED`.

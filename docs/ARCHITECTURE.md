@@ -1,5 +1,24 @@
 # Architecture
 
+## V0.8 explicit-link layer
+
+`threegpp.links` consumes fresh local `SemanticEvidence`, `DiscussionRecord`, and official metadata records. It creates stable `EvidenceNodeRef` values and versioned `ExplicitEvidenceLink` edges. The service recognizes literal TDoc and meeting references, existing Chair Note associations, contribution evidence's structural parent TDoc, and explicit reply/revision/supersession wording. It does not compare statement meaning.
+
+The link graph retains source locators, source identities, normalized and raw meeting roles, resolution state, and literal basis. Link and graph identities include source identities, `explicit-link-v1`, and the V0.7 meeting-alias ruleset. A changed checksum, metadata record, semantic source identity, link ruleset, or alias ruleset therefore changes the derived graph identity.
+
+`data/derived/links/<wg>/<scope>/graph.json.gz` contains a compact deterministic graph. DuckDB stores node/link IDs, kinds, meeting/TDoc keys, source identities, provenance keys, ruleset versions, and the graph receipt. Full contribution and Chair Note bodies remain outside DuckDB. All graph inputs are local; source preparation remains an explicit separate workflow.
+
+The authority path remains unchanged:
+
+```text
+Official TDoc List → metadata authority
+Chair Note → positive discussion context
+Contribution TDoc → company-scoped SemanticEvidence
+Meeting report/minutes → meeting-scoped SemanticEvidence
+```
+
+An explicit reference chain may connect these layers through one TDoc. The core does not convert that chain into proposal equivalence, company stance, or adoption of a particular contribution statement.
+
 ## V0.7 historical range layer
 
 ```text

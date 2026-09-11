@@ -185,6 +185,48 @@ CREATE TABLE IF NOT EXISTS semantic_evidence (
     statement_text VARCHAR NOT NULL,
     evidence_json VARCHAR NOT NULL
 );
+
+-- Derived V0.8 explicit-reference graph. Full document and Chair Note bodies
+-- remain in their portable source layers; this index contains locators only.
+CREATE TABLE IF NOT EXISTS explicit_link_graph_state (
+    graph_id VARCHAR PRIMARY KEY,
+    working_group VARCHAR NOT NULL,
+    scope_json VARCHAR NOT NULL,
+    link_schema_version VARCHAR NOT NULL,
+    graph_schema_version VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    graph_path VARCHAR NOT NULL,
+    graph_checksum VARCHAR NOT NULL,
+    artifact_checksum VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS explicit_link_nodes (
+    graph_id VARCHAR NOT NULL,
+    node_id VARCHAR NOT NULL,
+    node_kind VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR,
+    tdoc_id VARCHAR,
+    source_identity VARCHAR NOT NULL,
+    PRIMARY KEY (graph_id, node_id)
+);
+
+CREATE TABLE IF NOT EXISTS explicit_evidence_links (
+    graph_id VARCHAR NOT NULL,
+    link_id VARCHAR NOT NULL,
+    link_kind VARCHAR NOT NULL,
+    source_node_id VARCHAR NOT NULL,
+    target_node_id VARCHAR NOT NULL,
+    literal_basis VARCHAR NOT NULL,
+    discussion_meeting VARCHAR,
+    source_meeting VARCHAR,
+    discovery_meeting VARCHAR,
+    authority_meeting VARCHAR,
+    metadata_meeting VARCHAR,
+    resolution_state VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    PRIMARY KEY (graph_id, link_id)
+);
 """
 
 

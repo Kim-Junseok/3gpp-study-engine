@@ -1,6 +1,22 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.7 adds deterministic historical metadata resolution, bounded meeting-range Chair Note coverage, and historical corpus backfill planning without changing the accepted evidence-authority hierarchy.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.8 adds deterministic document/reference-level links across contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
+
+## V0.8 explicit evidence linkage
+
+V0.8 builds links only when a grounded source supplies a literal TDoc/meeting reference or an existing structural contract establishes the parent TDoc. `DISCUSSION_REFERENCE` means that a bounded Chair Note discussion context explicitly references a TDoc. `EXPLICIT_TDOC_REFERENCE` means that SemanticEvidence or metadata literally names a TDoc. Reply, revision, and supersession kinds require those cue words in the source. `SAME_TDOC` binds contribution SemanticEvidence to its parent document.
+
+```text
+Contribution evidence
+        ↓ SAME_TDOC
+      TDoc
+      ↑  ↑
+Chair Note  Meeting evidence
+```
+
+The graph preserves discussion, evidence-source, and metadata meetings separately. For example, a Chair Note from `RAN1#125` may explicitly reference `R1-2603427` whose resolved metadata meeting is `RAN1#124bis`. This cross-meeting edge establishes the literal document reference only. A meeting Agreement that names `R1-2601985` likewise establishes a document-level reference; its separate disposition does not apply automatically to every statement in that TDoc.
+
+Use `show-tdoc-links`, `show-meeting-links`, or `show-topic-links` for read-only local views. `build-explicit-links` persists a compact rebuildable graph under `data/derived/links/`. `plan-link-preparation` reports missing metadata, bodies, indexes, or SemanticEvidence without executing acquisition or extraction. None of these commands downloads a contribution, Chair Note, TDoc list, or meeting report.
 
 ## V0.7 historical coverage
 
@@ -16,7 +32,7 @@ Range coverage reuses V0.6 once per meeting. Missing sources and ambiguous snaps
 
 ## Milestone status
 
-**Current development milestone: V0.7 historical meeting coverage.**
+**Current development milestone: V0.8 explicit evidence linkage.**
 
 ```text
 3GPP meeting
@@ -179,7 +195,8 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - V0.5 — Cross-meeting topic study
 - V0.6 — Chair Note guided discussion coverage and topic-corpus expansion planning
 - V0.7 — Historical metadata resolution and meeting-range Chair Note coverage
-- V0.8 — Proposition linkage and cross-company/cross-meeting analysis
+- V0.8 — Explicit document/reference-level evidence linkage
+- V0.9 — Semantic proposition equivalence and cross-company/cross-meeting analysis (future)
 - V1.0 — General RAN1/RAN2 research workflow
 
 ## V0.5 offline topic evidence

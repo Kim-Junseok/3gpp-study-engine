@@ -5,6 +5,16 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.8 explicit evidence links
+
+For “Which meeting agreements explicitly reference these TDocs?”, use `show-tdoc-links`, `show-meeting-links`, or `show-topic-links`. Treat the returned `EvidenceLinkGraph` as the source of truth. Separate contribution evidence, Chair Note discussion records, meeting evidence, explicit links, ambiguous references, unresolved references, and preparation gaps.
+
+State each relationship at its recorded level. Safe wording is: “The meeting Agreement explicitly references TDoc R1-…, authored by Company X.” If the edge carries a disposition, report it as a separate property of the meeting evidence. Do not say that the meeting adopted or endorsed every proposition in the referenced contribution.
+
+`DISCUSSION_REFERENCE` means that one bounded selected Chair Note context literally names the TDoc. It does not mean considered, supported, rejected, or adopted. `SAME_TDOC` identifies a parent document and does not establish equivalence with another statement. Similar wording, the same topic, the same organization, and placement in one section cannot create a link.
+
+Use `plan-link-preparation` when the graph reports missing metadata, bodies, indexes, or SemanticEvidence. The plan never executes work. Do not call acquisition, indexing, or extraction commands unless the user separately requests the relevant operation. Never create company stance, support/opposition, proposition clusters, cross-meeting semantic continuity, or trend language from link counts.
+
 ## V0.7 historical meeting coverage
 
 For an explicit historical range, use `historical-discussion-coverage --wg <WG> --from-meeting <ID> --to-meeting <ID> --query <terms>`. If a meeting has ambiguous snapshots, report `SNAPSHOT_SELECTION_REQUIRED` and use an explicit `--snapshot MEETING=SNAPSHOT_ID` only when supplied or selected by the user. Preserve raw meeting notation and source provenance when the core aliases `124b` to `124bis`.

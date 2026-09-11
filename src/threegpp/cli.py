@@ -194,6 +194,24 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--batch", type=int, help="compile one 1-based eligible batch")
             command.add_argument("--fetch-plan", type=Path,
                                  help="write an existing-format TDocFetchPlan YAML; never execute")
+    build_links = subparsers.add_parser(
+        "build-explicit-links",
+        help="build and persist explicit links from already-local evidence; never downloads",
+    )
+    _add_link_scope_arguments(build_links)
+    show_tdoc_links = subparsers.add_parser(
+        "show-tdoc-links", help="show local explicit links centered on one TDoc")
+    _add_wg(show_tdoc_links)
+    show_tdoc_links.add_argument("--tdoc", required=True)
+    show_meeting_links = subparsers.add_parser(
+        "show-meeting-links", help="show local explicit links for one metadata meeting")
+    _add_wg_meeting(show_meeting_links)
+    show_topic_links = subparsers.add_parser(
+        "show-topic-links", help="show explicit links over V0.7 historical topic coverage")
+    _add_link_topic_arguments(show_topic_links)
+    prepare_links = subparsers.add_parser(
+        "plan-link-preparation", help="report missing local inputs without executing preparation")
+    _add_link_scope_arguments(prepare_links)
     return parser
 
 
@@ -232,6 +250,29 @@ def _add_evidence_scope_arguments(
         parser.add_argument("--limit", type=int, default=100)
 
 
+def _add_link_topic_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_wg(parser)
+    parser.add_argument("--from-meeting", required=True)
+    parser.add_argument("--to-meeting", required=True)
+    parser.add_argument("--query", required=True)
+    parser.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID")
+    parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--max-meetings", type=int, default=24)
+
+
+def _add_link_scope_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_wg(parser)
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--tdoc")
+    scope.add_argument("--meeting")
+    scope.add_argument("--from-meeting")
+    parser.add_argument("--to-meeting")
+    parser.add_argument("--query")
+    parser.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID")
+    parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--max-meetings", type=int, default=24)
+
+
 def source_for(value: str) -> ThreeGPPSource:
     working_group = WorkingGroup.parse(value)
     return RAN1Source() if working_group is WorkingGroup.RAN1 else RAN2Source()
@@ -246,6 +287,21 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"build-explicit-links", "show-tdoc-links", "show-meeting-links",
+                        "show-topic-links", "plan-link-preparation"}:
+        from threegpp.links import ExplicitLinkService
+        with MetadataRepository(args.db) as repository:
+            service = ExplicitLinkService(repository, args.data_dir)
+            graph = _build_link_graph(service, args)
+            if args.command == "build-explicit-links":
+                path = service.persist(graph)
+                _json({"graph": graph.model_dump(mode="json"), "derived_path": str(path),
+                       "downloads_performed": 0})
+            elif args.command == "plan-link-preparation":
+                _json(service.plan_preparation(graph))
+            else:
+                _json(graph)
+        return 0
     if args.command in {"historical-metadata-resolve", "historical-discussion-coverage",
                         "plan-historical-corpus"}:
         from threegpp.historical import (
@@ -622,6 +678,30 @@ def run(args: argparse.Namespace) -> int:
         if close:
             close()
     return 2
+
+
+def _build_link_graph(service, args):
+    if getattr(args, "tdoc", None):
+        return service.build_for_tdoc(args.wg, args.tdoc)
+    if getattr(args, "from_meeting", None):
+        if not getattr(args, "to_meeting", None) or not getattr(args, "query", None):
+            raise ValueError("--from-meeting requires --to-meeting and --query")
+        from threegpp.historical import HistoricalCoverageRequest
+        snapshots = {}
+        for value in getattr(args, "snapshot", []):
+            if "=" not in value:
+                raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+            meeting, snapshot_id = value.split("=", 1)
+            if not meeting or not snapshot_id:
+                raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+            snapshots[meeting] = snapshot_id
+        return service.build_for_topic(HistoricalCoverageRequest(
+            working_group=args.wg, from_meeting=args.from_meeting,
+            to_meeting=args.to_meeting, query=args.query,
+            chair_note_snapshots=snapshots,
+            limit_per_meeting=getattr(args, "limit", 100),
+            max_meetings=getattr(args, "max_meetings", 24)))
+    return service.build_for_meeting(args.wg, args.meeting)
 
 
 def main(argv: list[str] | None = None) -> int:
