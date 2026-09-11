@@ -18,7 +18,7 @@ from .evidence import (
     SemanticEvidence,
 )
 from .meeting import (Meeting, WorkingGroup, normalize_meeting_identifier,
-                      normalize_report_meeting_identifier)
+                      normalize_report_meeting_identifier, normalize_source_meeting_identifier)
 from .topic import (
     AgreementDisposition, ContextRole, DispositionEvidence, EvidenceContext,
     EvidenceLink, EvidenceLinkType, MeetingAuthority, MeetingAuthorityBasis,
@@ -87,6 +87,7 @@ __all__ = [
     "merge_tdoc_metadata",
     "normalize_meeting_identifier",
     "normalize_report_meeting_identifier",
+    "normalize_source_meeting_identifier",
     "AgreementDisposition", "ContextRole", "DispositionEvidence", "EvidenceContext",
     "EvidenceLink", "EvidenceLinkType", "MeetingAuthority", "MeetingAuthorityBasis",
     "MeetingIdentity", "MeetingTimelineEntry", "TopicCoverage", "TopicEvidenceBundle",

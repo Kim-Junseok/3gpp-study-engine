@@ -1,4 +1,32 @@
+import httpx
+
 from threegpp.models import ArtifactType
+from threegpp.sources import RAN1Source
+
+
+def test_source_directory_b_alias_preserves_raw_url() -> None:
+    base = "https://www.3gpp.org/ftp/tsg_ran/WG1_RL1/"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == base:
+            return httpx.Response(
+                200,
+                text='<a href="TSGR1_124/">TSGR1_124</a><a href="TSGR1_124b/">TSGR1_124b</a>',
+                request=request,
+            )
+        if str(request.url) == base + "TSGR1_124b/":
+            return httpx.Response(200, text="", request=request)
+        return httpx.Response(404, request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        source = RAN1Source(client=client, backoff=0)
+        historical = next(item for item in source.list_meetings() if item.meeting_number == "124bis")
+        assert historical.meeting_name == "RAN1#124b"
+        assert str(historical.source_url).endswith("TSGR1_124b/")
+        assert source.meeting_url("124bis").endswith("TSGR1_124b/")
+        metadata = source.get_meeting_metadata("124bis")
+        assert metadata.meeting_number == "124bis"
+        assert metadata.meeting_name == "RAN1#124b"
 
 
 def test_list_meetings_keeps_suffixes_and_skips_unknown_layouts(ran2_source) -> None:

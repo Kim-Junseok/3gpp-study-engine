@@ -11,7 +11,7 @@ explicit meeting range
  -> existing TDocFetchPlan
 ```
 
-`threegpp.historical` is offline. Its versioned meeting adapter maps `b` to `bis` only as identifier normalization and preserves raw notation. Numeric suffix ordering gives `124 < 124bis < 125`; explicit ranges have a configurable meeting-count bound and insert only locally known suffixed meetings.
+`threegpp.historical` is offline. Its versioned meeting adapter maps `b` to `bis` only as identifier normalization and preserves raw notation. The source adapter resolves normalized requests through the advertised official directory list, so a `124bis` request can retain the literal `TSGR1_124b` URL. Numeric suffix ordering gives `124 < 124bis < 125`; explicit ranges have a configurable meeting-count bound and insert only locally known suffixed meetings.
 
 The resolver reads canonical-current records before stored official list snapshots. A current exact record wins over a historical duplicate. Incompatible candidates at the same precedence tier yield `AMBIGUOUS` with every candidate. Snapshot candidates retain URL, checksum, role, timestamp, and exact metadata; canonical-current state is unchanged.
 

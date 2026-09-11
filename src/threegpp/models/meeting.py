@@ -49,6 +49,16 @@ def normalize_report_meeting_identifier(value: str) -> str:
     return normalize_meeting_identifier(text)
 
 
+def normalize_source_meeting_identifier(value: str) -> str:
+    """Normalize an identifier found literally in an official meeting path.
+
+    Some historical 3GPP directories use ``b`` where metadata uses ``bis``.
+    This adapter preserves the literal directory in its URL while reconciling
+    only the meeting identity.
+    """
+    return normalize_report_meeting_identifier(value)
+
+
 class Meeting(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

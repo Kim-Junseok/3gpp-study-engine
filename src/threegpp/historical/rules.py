@@ -6,7 +6,7 @@ import re
 from threegpp.chair_notes.rules import identity
 from threegpp.models import WorkingGroup, normalize_meeting_identifier
 
-MEETING_ALIAS_RULESET_VERSION = "meeting-alias-v1"
+MEETING_ALIAS_RULESET_VERSION = "meeting-alias-v2"
 HISTORICAL_METADATA_RESOLVER_VERSION = "historical-metadata-v1"
 HISTORICAL_COVERAGE_SCHEMA_VERSION = "1"
 HISTORICAL_CORPUS_PLAN_SCHEMA_VERSION = "1"

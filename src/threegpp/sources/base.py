@@ -90,9 +90,32 @@ class DirectorySource(ThreeGPPSource):
         return urljoin(self.BASE_URL, f"{self.group_directory}/")
 
     def meeting_url(self, meeting: str) -> str:
-        from threegpp.models import normalize_meeting_identifier
+        from threegpp.models import normalize_meeting_identifier, normalize_source_meeting_identifier
 
         meeting = normalize_meeting_identifier(meeting)
+        if not meeting.endswith("bis"):
+            return urljoin(self.group_url, f"{self.meeting_prefix}{meeting}/")
+        matches: list[tuple[str, str]] = []
+        prefix = self.meeting_prefix.lower()
+        for name, url in self._links(self.group_url):
+            if not name.lower().startswith(prefix):
+                continue
+            raw_identifier = name[len(self.meeting_prefix) :]
+            try:
+                normalized = normalize_source_meeting_identifier(raw_identifier)
+            except ValueError:
+                continue
+            if normalized == meeting:
+                matches.append((raw_identifier, url))
+        exact = [url for raw, url in matches if raw.casefold() == meeting.casefold()]
+        if len(exact) == 1:
+            return exact[0]
+        if len(matches) == 1:
+            return matches[0][1]
+        if len(matches) > 1:
+            raise SourceError(
+                f"multiple official meeting directories resolve to {self.working_group.value}#{meeting}"
+            )
         return urljoin(self.group_url, f"{self.meeting_prefix}{meeting}/")
 
     def _get_html(self, url: str) -> str:
@@ -140,6 +163,8 @@ class DirectorySource(ThreeGPPSource):
         return self.parse_links(self._get_html(url), url)
 
     def list_meetings(self) -> list[Meeting]:
+        from threegpp.models import normalize_source_meeting_identifier
+
         prefix = self.meeting_prefix.lower()
         results: dict[str, Meeting] = {}
         for name, url in self._links(self.group_url):
@@ -147,9 +172,10 @@ class DirectorySource(ThreeGPPSource):
                 continue
             identifier = name[len(self.meeting_prefix) :]
             try:
+                normalized = normalize_source_meeting_identifier(identifier)
                 meeting = Meeting(
                     working_group=self.working_group,
-                    meeting_number=identifier,
+                    meeting_number=normalized,
                     meeting_name=f"{self.working_group.value}#{identifier}",
                     source_url=url,
                 )
@@ -159,13 +185,16 @@ class DirectorySource(ThreeGPPSource):
         return sorted(results.values(), key=lambda item: _meeting_sort_key(item.meeting_number))
 
     def get_meeting_metadata(self, meeting: str) -> Meeting:
+        from threegpp.models import normalize_source_meeting_identifier
+
         url = self.meeting_url(meeting)
         self._get_html(url)
-        normalized = PurePosixPath(urlparse(url).path).name[len(self.meeting_prefix) :]
+        raw_identifier = PurePosixPath(urlparse(url).path).name[len(self.meeting_prefix) :]
+        normalized = normalize_source_meeting_identifier(raw_identifier)
         return Meeting(
             working_group=self.working_group,
             meeting_number=normalized,
-            meeting_name=f"{self.working_group.value}#{normalized}",
+            meeting_name=f"{self.working_group.value}#{raw_identifier}",
             source_url=url,
         )
 

@@ -4,7 +4,7 @@
 
 ## V0.7 historical coverage
 
-V0.7 resolves literal Chair Note TDoc references against canonical-current metadata and stored official list snapshots. It preserves discussion meeting, metadata meeting, exact snapshot URL/checksum/role, and every ambiguity candidate. The versioned adapter accepts `124b`, `124bis`, `RAN1#124b`, and `RAN1#124bis` as the same identifier while preserving raw notation; aliases do not equate source artifacts or confer authority.
+V0.7 resolves literal Chair Note TDoc references against canonical-current metadata and stored official list snapshots. It preserves discussion meeting, metadata meeting, exact snapshot URL/checksum/role, and every ambiguity candidate. The versioned adapter accepts `124b`, `124bis`, `RAN1#124b`, and `RAN1#124bis` as the same identifier while preserving raw notation. Official source discovery also retains a literal path such as `TSGR1_124b` while exposing normalized identity `124bis`; aliases do not equate source artifacts or confer authority.
 
 ```bash
 python -m threegpp.cli historical-metadata-resolve --wg RAN1 --meeting 124bis --tdoc R1-2603427

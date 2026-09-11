@@ -3,7 +3,7 @@
 ## V0.7 historical boundaries
 
 - Historical resolution adds official metadata provenance; it does not add discussion evidence. `METADATA_RELEVANT_ONLY` remains separate from `CHAIR_NOTE_CONFIRMED`.
-- `124b -> 124bis` is identifier equivalence only. It does not make snapshots identical or assign authority.
+- `124b -> 124bis` is identifier equivalence only. Source discovery preserves the literal official path. The alias does not make snapshots identical or assign authority.
 - Chair Note meeting and TDoc metadata meeting remain separate. A later Chair Note reference establishes only that the selected later snapshot references the older TDoc.
 - Such a reference does not establish continuity, continuing activity, acceptance, or an ongoing meeting outcome.
 - Missing sources produce limitations, never a fabricated zero-discussion conclusion.
