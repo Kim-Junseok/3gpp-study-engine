@@ -2,6 +2,12 @@
 
 ## V0.8 explicit links
 
+`TDocStudyView` is a non-persisted read model with `DiscussionView`,
+`ContributionView`, and `MeetingOutcomeView`. Its deterministic identity depends
+on the metadata, evidence, links, and status values included in the view. It
+references literal source statements and provenance already held by the accepted
+layers; it does not create another evidence store.
+
 `EvidenceNodeRef` identifies a TDoc metadata record, `SemanticEvidence`, `DiscussionRecord`, or literal meeting reference. It stores a stable node ID, working group, meeting, TDoc ID where applicable, source artifact and identity, and compact `SourceLocator` values. Locators contain `EvidenceRef`, `ChairNoteRef`, or metadata field provenance; nodes do not copy full source bodies.
 
 `ExplicitEvidenceLink` stores source and target nodes, literal basis, locator, discussion/source/metadata meetings, resolution state, deterministic confidence, and the independent link ruleset version. Its kinds are `SAME_TDOC`, `EXPLICIT_TDOC_REFERENCE`, `EXPLICIT_MEETING_REFERENCE`, `EXPLICIT_REPLY_REFERENCE`, `EXPLICIT_REVISION_REFERENCE`, `EXPLICIT_SUPERSESSION_REFERENCE`, and `DISCUSSION_REFERENCE`. `AgreementDisposition` is a separate optional field and never changes the link kind.

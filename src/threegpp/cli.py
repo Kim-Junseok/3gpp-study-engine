@@ -203,6 +203,13 @@ def build_parser() -> argparse.ArgumentParser:
         "show-tdoc-links", help="show local explicit links centered on one TDoc")
     _add_wg(show_tdoc_links)
     show_tdoc_links.add_argument("--tdoc", required=True)
+    show_tdoc_study = subparsers.add_parser(
+        "show-tdoc-study", help="show a research-facing local TDoc study; never downloads")
+    _add_wg(show_tdoc_study)
+    show_tdoc_study.add_argument("--tdoc", required=True)
+    show_tdoc_study.add_argument(
+        "--provenance", action="store_true",
+        help="include internal evidence references, links, states, and identities")
     show_meeting_links = subparsers.add_parser(
         "show-meeting-links", help="show local explicit links for one metadata meeting")
     _add_wg_meeting(show_meeting_links)
@@ -287,6 +294,12 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "show-tdoc-study":
+        from threegpp.study_view import TDocStudyService, render_tdoc_study
+        with MetadataRepository(args.db) as repository:
+            view = TDocStudyService(repository, args.data_dir).build(args.wg, args.tdoc)
+            print(render_tdoc_study(view, provenance=args.provenance), end="")
+        return 0
     if args.command in {"build-explicit-links", "show-tdoc-links", "show-meeting-links",
                         "show-topic-links", "plan-link-preparation"}:
         from threegpp.links import ExplicitLinkService

@@ -1,6 +1,17 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. V0.8 adds deterministic document/reference-level links across contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
+`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. A research-facing TDoc view answers three questions first:
+
+```text
+TDoc
+├─ Discussion
+├─ Contribution
+└─ Meeting outcome
+```
+
+Use `show-tdoc-study --wg <WG> --tdoc <ID>` for this view. It reports whether a selected Chair Note references the TDoc, what inspected contribution evidence says, and whether prepared meeting-outcome evidence explicitly references it. Add `--provenance` to inspect the underlying references, link identities, and backend states. The command reads local evidence only and performs no download. See `docs/STUDY_VOCABULARY.md` for the canonical wording.
+
+V0.8 supplies the deterministic document/reference-level links beneath this view. It connects contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
 
 ## V0.8 explicit evidence linkage
 

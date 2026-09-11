@@ -2,6 +2,12 @@
 
 ## V0.8 explicit-link layer
 
+`threegpp.study_view` derives an on-demand research view with Discussion,
+Contribution, and Meeting outcome sections. It reads existing metadata,
+`SemanticEvidence`, Chair Note references, explicit links, and per-TDoc status.
+It persists no evidence and performs no acquisition. Normal output hides backend
+graph terminology; provenance mode exposes it for audit.
+
 `threegpp.links` consumes fresh local `SemanticEvidence`, `DiscussionRecord`, and official metadata records. It creates stable `EvidenceNodeRef` values and versioned `ExplicitEvidenceLink` edges. The service recognizes literal TDoc and meeting references, existing Chair Note associations, contribution evidence's structural parent TDoc, and explicit reply/revision/supersession wording. It does not compare statement meaning.
 
 The link graph retains source locators, source identities, normalized and raw meeting roles, resolution state, and literal basis. Link and graph identities include source identities, `explicit-link-v1`, and the V0.7 meeting-alias ruleset. A changed checksum, metadata record, semantic source identity, link ruleset, or alias ruleset therefore changes the derived graph identity.

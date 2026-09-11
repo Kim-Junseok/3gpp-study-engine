@@ -5,6 +5,25 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.8.1 research-facing TDoc view
+
+For a user-facing question about one TDoc, run `show-tdoc-study --wg <WG>
+--tdoc <ID>` and organize the answer as Discussion, Contribution, and Meeting
+outcome. Follow `docs/STUDY_VOCABULARY.md`. Use `--provenance` only when the user
+asks for evidence details or engine internals.
+
+Map “Was this TDoc discussed?” to Discussion, “What did it propose?” to
+Contribution, “What was agreed about it?” to Meeting outcome, and “What happened
+with this TDoc?” to all three sections. Preserve each section independently.
+Not observed in the selected Chair Note does not mean not discussed. No explicit
+meeting-outcome reference does not mean rejection or prove that no outcome
+exists. A contribution conclusion is not a meeting conclusion.
+
+If the view reports `TDoc content inspected: No`, state that content inspection
+is required to answer proposal, observation, conclusion, or FFS questions. Do
+not fetch the contribution in V0.8.1. Selective on-demand acquisition belongs to
+V0.9.
+
 ## V0.8 explicit evidence links
 
 For “Which meeting agreements explicitly reference these TDocs?”, use `show-tdoc-links`, `show-meeting-links`, or `show-topic-links`. Treat the returned `EvidenceLinkGraph` as the source of truth. Separate contribution evidence, Chair Note discussion records, meeting evidence, explicit links, ambiguous references, unresolved references, and preparation gaps.

@@ -2,6 +2,24 @@
 
 ## Explicit evidence linkage
 
+For a TDoc-centered research question, build the read view from the locally
+prepared layers:
+
+```text
+User asks about a TDoc
+        ↓
+Discussion evidence
+        +
+Contribution content/evidence
+        +
+Meeting outcome evidence
+        ↓
+Research-facing TDoc study view
+```
+
+Run `show-tdoc-study --wg <WG> --tdoc <ID>`. If contribution content has not
+been inspected, the view states that gap. V0.8.1 does not fetch the body.
+
 Run linkage after local metadata, Chair Note coverage, historical resolution, document normalization, lexical indexing, and SemanticEvidence extraction are prepared as needed:
 
 ```text

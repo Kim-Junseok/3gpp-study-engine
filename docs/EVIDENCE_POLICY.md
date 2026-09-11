@@ -1,5 +1,18 @@
 # Evidence policy
 
+## V0.8.1 research-facing wording
+
+- Referenced in discussion does not mean agreed.
+- Not observed in a selected Chair Note does not mean not discussed.
+- No explicit meeting reference found does not mean rejected and does not prove
+  that no meeting outcome exists.
+- A contribution conclusion is not a meeting conclusion.
+- Missing local contribution content does not mean that official metadata or
+  the official TDoc is unavailable.
+
+The canonical user-facing terms are defined in `STUDY_VOCABULARY.md`. Backend
+states remain available through explicit provenance output.
+
 ## V0.8 explicit-link policy
 
 An explicit TDoc reference establishes a document-level relationship. It does not automatically establish semantic equivalence between a meeting statement and every proposition in the referenced TDoc.
