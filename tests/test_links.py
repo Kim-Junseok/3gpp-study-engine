@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import gzip
+import hashlib
+import json
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import HttpUrl
 
 from threegpp.chair_notes.models import (
     AssociationBasis, ChairNoteRef, DiscussionRecord, TDocReference, TopicAnchor,
 )
 from threegpp.db import MetadataRepository
+from threegpp.evidence import EvidenceExtractionService
 from threegpp.links import (
-    EvidenceNodeKind, ExplicitLinkKind, ExplicitLinkService, LinkCoverageState,
+    ContributionSemanticEvidenceState, EvidenceNodeKind, ExplicitLinkKind,
+    ExplicitLinkPresenceState, ExplicitLinkService, LinkCoverageState,
 )
 from threegpp.models import (
     AgreementDisposition, DetectionBasis, DocumentRole, EvidenceKind, EvidenceRef,
@@ -188,6 +194,29 @@ def test_incompatible_metadata_is_ambiguous_without_definitive_target(service):
     assert len(link.resolution_candidates) == 2
 
 
+def test_tdoc_build_prefers_unique_canonical_current_over_snapshot_variant(
+        service, monkeypatch):
+    current = metadata().model_copy(update={
+        "source_url": HttpUrl("https://example.test/124bis/R1-2601985.zip"),
+        "directory_present": True,
+    })
+    snapshot_variant = metadata()
+    service.repository.upsert_tdoc(current)
+    meeting_item = evidence("Agreement: The draft CR R1-2601985 is endorsed.")
+    monkeypatch.setattr(EvidenceExtractionService, "list_evidence",
+                        lambda *args, **kwargs: [meeting_item])
+    monkeypatch.setattr(service, "_all_metadata",
+                        lambda *args, **kwargs: [current, snapshot_variant])
+    graph = service.build_for_tdoc("RAN1", "R1-2601985")
+    meeting_link = next(link for link in graph.links
+                        if link.source_node.evidence_scope is EvidenceScope.MEETING)
+    assert meeting_link.resolution_state is LinkCoverageState.LINKED
+    assert meeting_link.target_node.source_identity == service._metadata_node(
+        current).source_identity
+    [status] = service.build_tdoc_statuses(graph)
+    assert status.meeting_explicit_link_state is ExplicitLinkPresenceState.EXPLICIT_LINK_PRESENT
+
+
 def test_similar_wording_same_topic_and_company_do_not_link_tdocs(service):
     first = evidence("Proposal: fast HARQ recovery with explicit indication.", evidence_id="e1",
         tdoc_id="R1-2601001", scope=EvidenceScope.CONTRIBUTION, kind=EvidenceKind.PROPOSAL)
@@ -333,6 +362,121 @@ def test_persistence_indexes_only_compact_link_fields(service, tmp_path):
     assert "statement_text" not in columns and "body_text" not in columns
 
 
+def test_persist_writes_independent_per_tdoc_status_at_graph_identity_path(service, tmp_path):
+    contribution = evidence("Proposal: use explicit DCI.", evidence_id="contribution",
+        tdoc_id="R1-2601985", meeting="124bis", scope=EvidenceScope.CONTRIBUTION,
+        kind=EvidenceKind.PROPOSAL)
+    meeting = evidence("Agreement: Refer to R1-2601985.", evidence_id="meeting")
+    graph = service.resolve_links(working_group="RAN1",
+        semantic_evidence=[contribution, meeting], discussion_records=[discussion()],
+        metadata_records=[metadata()])
+
+    service.persist(graph)
+    status_path = (tmp_path / "derived" / "links" / "ran1" / graph.graph_id
+                   / "tdoc-status.jsonl.gz")
+    assert status_path.is_file()
+    rows = [json.loads(line) for line in gzip.decompress(status_path.read_bytes()).splitlines()]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["tdoc_id"] == "R1-2601985"
+    assert row["chair_note_discussion_link_state"] == "explicit_link_present"
+    assert row["contribution_semantic_evidence_state"] == "semantic_evidence_available"
+    assert row["meeting_explicit_link_state"] == "explicit_link_present"
+    assert row["cross_meeting_reference_state"] == "explicit_link_present"
+    assert row["preparation_state"]["coverage_state"] == "body_not_local"
+    assert row["provenance_identities"]["chair_note_source_identities"]
+    assert row["provenance_identities"]["contribution_evidence_source_identities"]
+    assert row["provenance_identities"]["meeting_evidence_source_identities"]
+    assert row["provenance_identities"]["cross_meeting_source_identities"]
+    from threegpp.links import rules
+    checksum = row.pop("record_checksum")
+    assert checksum == rules.identity(row)
+    state = service.connection.execute(
+        "select status_path,status_checksum,artifact_checksum,record_count,"
+        "source_identity_checksum from explicit_link_tdoc_status_state").fetchone()
+    assert state[0].endswith(f"/{graph.graph_id}/tdoc-status.jsonl.gz")
+    assert all(len(value) == 64 for value in state[1:3])
+    assert state[3] == 1 and len(state[4]) == 64
+
+
+def test_no_explicit_link_is_per_axis_and_not_negative_evidence(service):
+    graph = service.resolve_links(working_group="RAN1", metadata_records=[metadata()])
+    [status] = service.build_tdoc_statuses(graph)
+    assert status.chair_note_discussion_link_state is ExplicitLinkPresenceState.NO_EXPLICIT_LINK
+    assert status.meeting_explicit_link_state is ExplicitLinkPresenceState.NO_EXPLICIT_LINK
+    assert status.cross_meeting_reference_state is ExplicitLinkPresenceState.NO_EXPLICIT_LINK
+    assert status.contribution_semantic_evidence_state is (
+        ContributionSemanticEvidenceState.BODY_NOT_LOCAL)
+    assert "not negative evidence" in status.limitations[0]
+
+
+def test_report_discovery_meeting_does_not_create_cross_meeting_reference(service):
+    report = metadata("R1-2603481", meeting="125",
+        title="Report of RAN1#124b meeting", organization="ETSI MCC")
+    graph = service.resolve_links(working_group="RAN1",
+        semantic_evidence=[evidence("Agreement: Refer to R1-2601985.")],
+        metadata_records=[report, metadata()])
+    target = next(item for item in service.build_tdoc_statuses(graph)
+                  if item.tdoc_id == "R1-2601985")
+    assert target.meeting_explicit_link_state is ExplicitLinkPresenceState.EXPLICIT_LINK_PRESENT
+    assert target.cross_meeting_reference_state is ExplicitLinkPresenceState.NO_EXPLICIT_LINK
+
+
+def test_tdoc_status_artifact_is_byte_deterministic_and_stale_safe(
+        service, tmp_path, monkeypatch):
+    first = service.resolve_links(working_group="RAN1", metadata_records=[metadata()],
+        scope={"kind": "tdoc", "tdoc_id": "R1-2601985"})
+    service.persist(first)
+    first_path = (tmp_path / service.tdoc_status_relative_path(first))
+    first_bytes = first_path.read_bytes()
+    service.persist(first)
+    assert first_path.read_bytes() == first_bytes
+
+    from threegpp.links import rules
+    monkeypatch.setattr(rules, "TDOC_EXPLICIT_LINK_STATUS_SCHEMA_VERSION", "changed")
+    service.persist(first)
+    changed_schema_bytes = first_path.read_bytes()
+    assert changed_schema_bytes != first_bytes
+    status_state = service.connection.execute(
+        "select status_schema_version,artifact_checksum "
+        "from explicit_link_tdoc_status_state").fetchone()
+    assert status_state == ("changed", hashlib.sha256(changed_schema_bytes).hexdigest())
+    monkeypatch.setattr(rules, "TDOC_EXPLICIT_LINK_STATUS_SCHEMA_VERSION", "1")
+
+    second = service.resolve_links(working_group="RAN1",
+        metadata_records=[metadata(checksum="f" * 64)],
+        scope={"kind": "tdoc", "tdoc_id": "R1-2601985"})
+    service.persist(second)
+    second_path = tmp_path / service.tdoc_status_relative_path(second)
+    assert second.graph_id != first.graph_id
+    assert second_path.is_file() and not first_path.exists()
+    assert service.connection.execute(
+        "select graph_id from explicit_link_tdoc_status_state").fetchall() == [(second.graph_id,)]
+
+
+def test_unresolved_and_ambiguity_only_nodes_are_not_canonical_tdoc_statuses(service):
+    unresolved = service.build_for_tdoc("RAN1", "R1-2699999")
+    assert service.build_tdoc_statuses(unresolved) == []
+    ambiguous = service.resolve_links(working_group="RAN1",
+        semantic_evidence=[evidence("Decision: Refer to R1-2601985.",
+                                    kind=EvidenceKind.DECISION)],
+        metadata_records=[metadata(meeting="124bis"),
+                          metadata(meeting="125", title="Other")])
+    assert service.build_tdoc_statuses(ambiguous) == []
+
+
+def test_status_deduplicates_one_canonical_tdoc_and_preserves_all_metadata_identities(service):
+    first = metadata(checksum="a" * 64)
+    second = metadata(checksum="f" * 64)
+    graph = service.resolve_links(working_group="RAN1", metadata_records=[first, second])
+    assert len([node for node in graph.nodes if node.kind is EvidenceNodeKind.TDOC]) == 2
+    [status] = service.build_tdoc_statuses(graph)
+    assert status.tdoc_id == "R1-2601985"
+    assert status.metadata_meeting == "124bis"
+    assert status.provenance_identities.canonical_tdoc_source_identities == sorted(
+        {node.source_identity for node in graph.nodes if node.kind is EvidenceNodeKind.TDOC})
+
+
 def test_persist_replaces_stale_graph_for_the_same_scope(service):
     item = evidence("Agreement: Refer to R1-2601985.")
     first = service.resolve_links(working_group="RAN1", semantic_evidence=[item],
@@ -347,6 +491,42 @@ def test_persist_replaces_stale_graph_for_the_same_scope(service):
         "select graph_id from explicit_link_graph_state").fetchall() == [(second.graph_id,)]
     assert service.connection.execute(
         "select distinct graph_id from explicit_evidence_links").fetchall() == [(second.graph_id,)]
+
+
+def test_same_scope_cleanup_preserves_unrelated_status_artifacts(service, tmp_path):
+    first = service.resolve_links(working_group="RAN1", metadata_records=[metadata()],
+        scope={"kind": "topic", "query": "HARQ", "from_meeting": "124bis",
+               "to_meeting": "126", "snapshot": "selected-a"})
+    unrelated = service.resolve_links(working_group="RAN1", metadata_records=[metadata()],
+        scope={"kind": "topic", "query": "contention-based PUSCH",
+               "from_meeting": "124bis", "to_meeting": "126", "snapshot": "selected-a"})
+    service.persist(first)
+    service.persist(unrelated)
+    unrelated_path = tmp_path / service.tdoc_status_relative_path(unrelated)
+    unrelated_bytes = unrelated_path.read_bytes()
+
+    replacement = service.resolve_links(working_group="RAN1",
+        metadata_records=[metadata(checksum="f" * 64)], scope=first.scope)
+    service.persist(replacement)
+
+    assert not (tmp_path / service.tdoc_status_relative_path(first)).exists()
+    assert unrelated_path.read_bytes() == unrelated_bytes
+    assert {row[0] for row in service.connection.execute(
+        "select graph_id from explicit_link_tdoc_status_state").fetchall()} == {
+            replacement.graph_id, unrelated.graph_id}
+
+
+def test_status_artifact_regenerates_from_unchanged_local_graph(service, tmp_path):
+    graph = service.resolve_links(working_group="RAN1", metadata_records=[metadata()],
+        scope={"kind": "tdoc", "tdoc_id": "R1-2601985"})
+    service.persist(graph)
+    status_path = tmp_path / service.tdoc_status_relative_path(graph)
+    expected = status_path.read_bytes()
+    status_path.unlink()
+
+    service.persist(graph)
+
+    assert status_path.read_bytes() == expected
 
 
 def test_link_build_never_invokes_document_or_chair_acquisition(service, monkeypatch):

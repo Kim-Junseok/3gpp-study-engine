@@ -6,7 +6,9 @@
 
 `ExplicitEvidenceLink` stores source and target nodes, literal basis, locator, discussion/source/metadata meetings, resolution state, deterministic confidence, and the independent link ruleset version. Its kinds are `SAME_TDOC`, `EXPLICIT_TDOC_REFERENCE`, `EXPLICIT_MEETING_REFERENCE`, `EXPLICIT_REPLY_REFERENCE`, `EXPLICIT_REVISION_REFERENCE`, `EXPLICIT_SUPERSESSION_REFERENCE`, and `DISCUSSION_REFERENCE`. `AgreementDisposition` is a separate optional field and never changes the link kind.
 
-`EvidenceLinkGraph` deduplicates nodes while retaining separate edges for separate source locators. It reports source identities, resolution coverage, structural counts, and `COMPLETE_FOR_AVAILABLE_EVIDENCE`, `PARTIAL_EVIDENCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`. Schema versions are explicit-link `1`, graph `1`, and preparation plan `1`; the initial ruleset is `explicit-link-v1`.
+`EvidenceLinkGraph` deduplicates nodes while retaining separate edges for separate source locators. It reports source identities, resolution coverage, structural counts, and `COMPLETE_FOR_AVAILABLE_EVIDENCE`, `PARTIAL_EVIDENCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`. Schema versions are explicit-link `1`, graph `1`, preparation plan `1`, and per-TDoc status `1`; the current ruleset is `explicit-link-v2`. A TDoc-centered build prefers one exact canonical-current metadata record over compatible stored snapshot variants while retaining their provenance. Incompatible candidates remain ambiguous.
+
+`TDocExplicitLinkStatus` is persisted once for each resolved canonical TDoc node. It records Chair Note discussion links, contribution SemanticEvidence, meeting explicit links, cross-meeting references, and preparation as independent dimensions. Each record retains the canonical node identity, dimension-specific source identities, graph identity, independent status-schema version, and record checksum. `NO_EXPLICIT_LINK` means only that the available inspected sources supplied no qualifying explicit link on that dimension. It is not negative evidence.
 
 For example:
 

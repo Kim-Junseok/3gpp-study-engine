@@ -8,6 +8,8 @@ An explicit TDoc reference establishes a document-level relationship. It does no
 
 Similar wording, a shared topic, one Chair Note section, or common authorship cannot create a link. Reply, revision, supersession, and cross-meeting continuity require literal source wording. An unresolved or ambiguous reference remains visible, and `NO_EXPLICIT_LINK` is not negative evidence.
 
+Per-TDoc link status keeps Chair Note discussion, contribution SemanticEvidence, meeting explicit links, cross-meeting references, and source preparation separate. One missing or present dimension cannot overwrite another. In every dimension, `NO_EXPLICIT_LINK` describes inspected-source coverage only; it never establishes rejection, opposition, or absence of an underlying relationship.
+
 The link graph does not contain company stance, support/opposition, semantic proposition clusters, or trend scores. Chair Note text labelled `Agreement:` remains discussion context and never becomes meeting SemanticEvidence through linkage.
 
 ## V0.7 historical boundaries

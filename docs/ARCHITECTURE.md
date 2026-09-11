@@ -6,7 +6,7 @@
 
 The link graph retains source locators, source identities, normalized and raw meeting roles, resolution state, and literal basis. Link and graph identities include source identities, `explicit-link-v1`, and the V0.7 meeting-alias ruleset. A changed checksum, metadata record, semantic source identity, link ruleset, or alias ruleset therefore changes the derived graph identity.
 
-`data/derived/links/<wg>/<scope>/graph.json.gz` contains a compact deterministic graph. DuckDB stores node/link IDs, kinds, meeting/TDoc keys, source identities, provenance keys, ruleset versions, and the graph receipt. Full contribution and Chair Note bodies remain outside DuckDB. All graph inputs are local; source preparation remains an explicit separate workflow.
+`data/derived/links/<wg>/<scope>/graph.json.gz` contains a compact deterministic graph. Each persisted graph also writes `data/derived/links/<wg>/<graph-id>/tdoc-status.jsonl.gz`. The latter contains one independently dimensioned status record per canonical TDoc node. DuckDB stores node/link IDs, kinds, meeting/TDoc keys, source identities, provenance keys, ruleset versions, and checksums for both artifacts. Full contribution and Chair Note bodies remain outside DuckDB. All graph inputs are local; source preparation remains an explicit separate workflow.
 
 The authority path remains unchanged:
 

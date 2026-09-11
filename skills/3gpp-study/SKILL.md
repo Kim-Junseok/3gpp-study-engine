@@ -15,6 +15,8 @@ State each relationship at its recorded level. Safe wording is: “The meeting A
 
 Use `plan-link-preparation` when the graph reports missing metadata, bodies, indexes, or SemanticEvidence. The plan never executes work. Do not call acquisition, indexing, or extraction commands unless the user separately requests the relevant operation. Never create company stance, support/opposition, proposition clusters, cross-meeting semantic continuity, or trend language from link counts.
 
+When a persisted `tdoc-status.jsonl.gz` is available, inspect its Chair Note, contribution SemanticEvidence, meeting explicit-link, cross-meeting, and preparation dimensions independently. Do not summarize them into one coverage label. Treat `NO_EXPLICIT_LINK` only as absence from the available inspected explicit-link sources, never as negative evidence.
+
 ## V0.7 historical meeting coverage
 
 For an explicit historical range, use `historical-discussion-coverage --wg <WG> --from-meeting <ID> --to-meeting <ID> --query <terms>`. If a meeting has ambiguous snapshots, report `SNAPSHOT_SELECTION_REQUIRED` and use an explicit `--snapshot MEETING=SNAPSHOT_ID` only when supplied or selected by the user. Preserve raw meeting notation and source provenance when the core aliases `124b` to `124bis`.

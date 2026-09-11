@@ -296,6 +296,8 @@ def run(args: argparse.Namespace) -> int:
             if args.command == "build-explicit-links":
                 path = service.persist(graph)
                 _json({"graph": graph.model_dump(mode="json"), "derived_path": str(path),
+                       "tdoc_status_path": str(
+                           service.data_root / service.tdoc_status_relative_path(graph)),
                        "downloads_performed": 0})
             elif args.command == "plan-link-preparation":
                 _json(service.plan_preparation(graph))

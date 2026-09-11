@@ -18,7 +18,7 @@ metadata
 
 Use `show-tdoc-links --wg <WG> --tdoc <ID>` for a TDoc-centered local view and `show-meeting-links --wg <WG> --meeting <ID>` for one metadata meeting. Use `show-topic-links --wg <WG> --from-meeting <ID> --to-meeting <ID> --query <terms>` to feed V0.7 historical coverage into the link graph. The range view preserves V0.7 chronology and keeps discussion meeting separate from metadata meeting.
 
-`build-explicit-links` writes a rebuildable graph; it performs no acquisition. `plan-link-preparation` reports `SOURCE_MISSING`, `BODY_NOT_LOCAL`, `SEMANTIC_EVIDENCE_NOT_EXTRACTED`, unresolved, ambiguous, and no-link states without executing any action. Missing explicit links do not prove that no relationship exists.
+`build-explicit-links` writes a rebuildable graph and a deterministic per-TDoc status artifact at `data/derived/links/<wg>/<graph-id>/tdoc-status.jsonl.gz`; it performs no acquisition. The status artifact keeps Chair Note discussion links, contribution SemanticEvidence, meeting explicit links, cross-meeting references, preparation, and their provenance identities independent. `plan-link-preparation` reports `SOURCE_MISSING`, `BODY_NOT_LOCAL`, `SEMANTIC_EVIDENCE_NOT_EXTRACTED`, unresolved, ambiguous, and no-link states without executing any action. Missing explicit links do not prove that no relationship exists.
 
 Read each edge literally. A Chair Note edge records an explicit discussion reference. A meeting edge records that accepted meeting evidence names a TDoc. A composed chain through one TDoc remains document-level unless the source explicitly identifies a narrower statement. Do not describe repeated topics as continuity, compare proposition meaning, or infer company stance.
 

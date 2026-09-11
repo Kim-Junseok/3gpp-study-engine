@@ -227,6 +227,16 @@ CREATE TABLE IF NOT EXISTS explicit_evidence_links (
     ruleset_version VARCHAR NOT NULL,
     PRIMARY KEY (graph_id, link_id)
 );
+
+CREATE TABLE IF NOT EXISTS explicit_link_tdoc_status_state (
+    graph_id VARCHAR PRIMARY KEY,
+    status_schema_version VARCHAR NOT NULL,
+    status_path VARCHAR NOT NULL,
+    status_checksum VARCHAR NOT NULL,
+    artifact_checksum VARCHAR NOT NULL,
+    record_count INTEGER NOT NULL,
+    source_identity_checksum VARCHAR NOT NULL
+);
 """
 
 

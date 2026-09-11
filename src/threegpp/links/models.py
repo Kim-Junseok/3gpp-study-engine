@@ -47,6 +47,20 @@ class LinkCompleteness(StrEnum):
     SOURCE_PREPARATION_REQUIRED = "source_preparation_required"
 
 
+class ExplicitLinkPresenceState(StrEnum):
+    EXPLICIT_LINK_PRESENT = "explicit_link_present"
+    NO_EXPLICIT_LINK = "no_explicit_link"
+
+
+class ContributionSemanticEvidenceState(StrEnum):
+    SEMANTIC_EVIDENCE_AVAILABLE = "semantic_evidence_available"
+    NO_SEMANTIC_EVIDENCE = "no_semantic_evidence"
+    SEMANTIC_EVIDENCE_NOT_EXTRACTED = "semantic_evidence_not_extracted"
+    BODY_NOT_LOCAL = "body_not_local"
+    SOURCE_MISSING = "source_missing"
+    NOT_APPLICABLE = "not_applicable"
+
+
 class SourceLocator(Model):
     locator_type: str
     source_artifact: str
@@ -143,3 +157,33 @@ class LinkPreparationPlan(Model):
     graph_id: str
     items: list[LinkPreparationItem]
     executes_actions: Literal[False] = False
+
+
+class TDocStatusProvenance(Model):
+    canonical_tdoc_source_identity: str
+    canonical_tdoc_source_identities: list[str]
+    chair_note_source_identities: list[str]
+    contribution_evidence_source_identities: list[str]
+    meeting_evidence_source_identities: list[str]
+    cross_meeting_source_identities: list[str]
+    preparation_source_identities: list[str]
+
+
+class TDocExplicitLinkStatus(Model):
+    schema_version: str
+    graph_id: str
+    graph_checksum: str
+    record_checksum: str
+    node_id: str
+    tdoc_id: str
+    working_group: WorkingGroup
+    metadata_meeting: str | None = None
+    document_role: DocumentRole | None = None
+    chair_note_discussion_link_state: ExplicitLinkPresenceState
+    contribution_semantic_evidence_state: ContributionSemanticEvidenceState
+    meeting_explicit_link_state: ExplicitLinkPresenceState
+    cross_meeting_reference_state: ExplicitLinkPresenceState
+    preparation_state: LinkPreparationItem
+    provenance_identities: TDocStatusProvenance
+    versions: dict[str, str]
+    limitations: list[str]

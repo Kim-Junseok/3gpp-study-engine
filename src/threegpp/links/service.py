@@ -21,9 +21,10 @@ from threegpp.topic import classify_agreement_disposition, resolve_authority_mee
 
 from . import rules
 from .models import (
-    EvidenceLinkGraph, EvidenceNodeKind, EvidenceNodeRef, ExplicitEvidenceLink,
-    ExplicitLinkKind, LinkCompleteness, LinkCoverage, LinkCoverageState,
-    LinkPreparationItem, LinkPreparationPlan, SourceLocator,
+    ContributionSemanticEvidenceState, EvidenceLinkGraph, EvidenceNodeKind,
+    EvidenceNodeRef, ExplicitEvidenceLink, ExplicitLinkKind, ExplicitLinkPresenceState,
+    LinkCompleteness, LinkCoverage, LinkCoverageState, LinkPreparationItem,
+    LinkPreparationPlan, SourceLocator, TDocExplicitLinkStatus, TDocStatusProvenance,
 )
 
 
@@ -188,6 +189,9 @@ class ExplicitLinkService:
     def build_for_tdoc(self, working_group: WorkingGroup | str, tdoc_id: str) -> EvidenceLinkGraph:
         group = WorkingGroup.parse(working_group)
         wanted = tdoc_id.upper()
+        current = self.repository.query_tdocs(TDocQuery(
+            working_groups=[group], tdoc_id=wanted))
+        preferred = {wanted: current[0]} if len(current) == 1 else {}
         all_evidence = EvidenceExtractionService(self.repository, self.data_root).list_evidence(
             EvidenceExtractionRequest(working_groups=[group], limit=5000))
         evidence = [item for item in all_evidence if item.tdoc_id.upper() == wanted
@@ -201,7 +205,7 @@ class ExplicitLinkService:
                            for field in (item.title or "", item.abstract or "")
                            for match in rules.TDOC_REFERENCE_PATTERN.finditer(field))]
         return self.resolve_links(working_group=group, semantic_evidence=evidence,
-                                  metadata_records=metadata,
+                                  metadata_records=metadata, preferred_metadata=preferred,
                                   scope={"kind": "tdoc", "tdoc_id": tdoc_id.upper()})
 
     def build_for_meeting(self, working_group: WorkingGroup | str, meeting: str) -> EvidenceLinkGraph:
@@ -280,15 +284,25 @@ class ExplicitLinkService:
         return self.build_for_range(coverage)
 
     def persist(self, graph: EvidenceLinkGraph) -> Path:
-        """Persist one compact derived graph and a minimal DuckDB locator index."""
+        """Persist one compact graph, per-TDoc status, and DuckDB locator indexes."""
         scope_id = rules.identity(graph.scope)[:20]
         relative = Path("derived/links") / graph.working_group.value.casefold() / scope_id / "graph.json.gz"
         path = self.data_root / relative
+        statuses = self.build_tdoc_statuses(graph)
+        status_relative = self.tdoc_status_relative_path(graph)
+        status_path = self.data_root / status_relative
         path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.parent.mkdir(parents=True, exist_ok=True)
         payload = gzip.compress(
             json.dumps(graph.model_dump(mode="json"), sort_keys=True,
                        separators=(",", ":"), ensure_ascii=False).encode("utf-8"), mtime=0)
+        status_jsonl = b"".join(
+            (json.dumps(item.model_dump(mode="json"), sort_keys=True,
+                        separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
+            for item in statuses)
+        status_payload = gzip.compress(status_jsonl, mtime=0)
         path.write_bytes(payload)
+        status_path.write_bytes(status_payload)
         scope_json = json.dumps(graph.scope, sort_keys=True)
         self.connection.execute("BEGIN")
         try:
@@ -296,6 +310,8 @@ class ExplicitLinkService:
                 "SELECT graph_id FROM explicit_link_graph_state WHERE working_group=? AND scope_json=?",
                 [graph.working_group.value, scope_json]).fetchall()]
             for graph_id in previous:
+                self.connection.execute(
+                    "DELETE FROM explicit_link_tdoc_status_state WHERE graph_id=?", [graph_id])
                 self.connection.execute("DELETE FROM explicit_link_nodes WHERE graph_id=?", [graph_id])
                 self.connection.execute("DELETE FROM explicit_evidence_links WHERE graph_id=?", [graph_id])
                 self.connection.execute("DELETE FROM explicit_link_graph_state WHERE graph_id=?", [graph_id])
@@ -304,6 +320,15 @@ class ExplicitLinkService:
                 [graph.graph_id, graph.working_group.value, scope_json,
                  graph.schema_version, graph.graph_schema_version, rules.EXPLICIT_LINK_RULESET_VERSION,
                  str(relative), graph.graph_checksum, hashlib.sha256(payload).hexdigest()])
+            preparation_identities = sorted({identity for item in statuses
+                for identity in item.provenance_identities.preparation_source_identities})
+            self.connection.execute(
+                "INSERT INTO explicit_link_tdoc_status_state VALUES (?,?,?,?,?,?,?)",
+                [graph.graph_id, rules.TDOC_EXPLICIT_LINK_STATUS_SCHEMA_VERSION,
+                 str(status_relative), hashlib.sha256(status_jsonl).hexdigest(),
+                 hashlib.sha256(status_payload).hexdigest(), len(statuses),
+                 rules.identity({"graph_sources": graph.source_identities,
+                                 "preparation_sources": preparation_identities})])
             if graph.nodes:
                 self.connection.executemany(
                     "INSERT INTO explicit_link_nodes VALUES (?,?,?,?,?,?,?)",
@@ -321,7 +346,44 @@ class ExplicitLinkService:
             self.connection.execute("ROLLBACK")
             raise
         self.connection.execute("COMMIT")
+        for graph_id in previous:
+            if graph_id == graph.graph_id:
+                continue
+            stale = (self.data_root / "derived" / "links"
+                     / graph.working_group.value.casefold() / graph_id / "tdoc-status.jsonl.gz")
+            stale.unlink(missing_ok=True)
+            try:
+                stale.parent.rmdir()
+            except OSError:
+                pass
         return path
+
+    @staticmethod
+    def tdoc_status_relative_path(graph: EvidenceLinkGraph) -> Path:
+        return (Path("derived/links") / graph.working_group.value.casefold()
+                / graph.graph_id / "tdoc-status.jsonl.gz")
+
+    def build_tdoc_statuses(self, graph: EvidenceLinkGraph) -> list[TDocExplicitLinkStatus]:
+        """Build one independent-axis status record for each canonical TDoc node."""
+        candidates = {candidate.node_id for link in graph.links
+                      for candidate in link.resolution_candidates}
+        definitive = {node.node_id for link in graph.links
+                      if link.resolution_state is LinkCoverageState.LINKED
+                      for node in (link.source_node, link.target_node)}
+        grouped: dict[tuple[str, str, str], list[EvidenceNodeRef]] = {}
+        for node in graph.nodes:
+            if (node.kind is not EvidenceNodeKind.TDOC or node.meeting is None
+                    or (node.node_id in candidates and node.node_id not in definitive)):
+                continue
+            key = (node.working_group.value, node.meeting, (node.tdoc_id or "").upper())
+            grouped.setdefault(key, []).append(node)
+        statuses = []
+        for nodes in grouped.values():
+            nodes.sort(key=lambda item: (item.node_id not in definitive, item.node_id))
+            statuses.append(self._tdoc_status(graph, nodes[0], nodes))
+        return sorted(statuses, key=lambda item: (
+            item.working_group.value, self._meeting_key(item.metadata_meeting),
+            item.tdoc_id, item.node_id))
 
     def plan_preparation(self, graph: EvidenceLinkGraph) -> LinkPreparationPlan:
         items: list[LinkPreparationItem] = []
@@ -366,6 +428,193 @@ class ExplicitLinkService:
         return LinkPreparationPlan(schema_version=rules.LINK_PREPARATION_SCHEMA_VERSION,
                                    plan_id="link-plan-" + rules.identity(payload),
                                    graph_id=graph.graph_id, items=items)
+
+    def _tdoc_status(self, graph: EvidenceLinkGraph, node: EvidenceNodeRef,
+                     canonical_nodes: Sequence[EvidenceNodeRef]) -> TDocExplicitLinkStatus:
+        assert node.tdoc_id is not None
+        canonical_node_ids = {item.node_id for item in canonical_nodes}
+        incident = [link for link in graph.links
+                    if link.source_node.node_id in canonical_node_ids
+                    or link.target_node.node_id in canonical_node_ids]
+        chair_links = [link for link in incident
+                       if link.kind is ExplicitLinkKind.DISCUSSION_REFERENCE
+                       and link.target_node.node_id in canonical_node_ids
+                       and link.resolution_state is LinkCoverageState.LINKED]
+        contribution_links = [link for link in incident
+                              if link.kind is ExplicitLinkKind.SAME_TDOC
+                              and link.target_node.node_id in canonical_node_ids
+                              and link.source_node.evidence_scope is EvidenceScope.CONTRIBUTION
+                              and link.resolution_state is LinkCoverageState.LINKED]
+        meeting_links = [link for link in incident
+                         if link.kind is not ExplicitLinkKind.SAME_TDOC
+                         and link.target_node.node_id in canonical_node_ids
+                         and link.source_node.kind is EvidenceNodeKind.SEMANTIC_EVIDENCE
+                         and link.source_node.evidence_scope is EvidenceScope.MEETING
+                         and link.resolution_state is LinkCoverageState.LINKED]
+        cross_links = [link for link in graph.links
+                       if link.resolution_state is LinkCoverageState.LINKED
+                       and any(self._is_cross_meeting_reference(link, candidate)
+                               for candidate in canonical_nodes)]
+        coverage = next((item for item in graph.coverage
+                         if item.tdoc_id.upper() == node.tdoc_id.upper()
+                         and item.metadata_meeting == node.meeting), None)
+        if coverage is None:
+            coverage = next((item for item in graph.coverage
+                             if item.tdoc_id.upper() == node.tdoc_id.upper()), None)
+        base_state = coverage.state if coverage else LinkCoverageState.NO_EXPLICIT_LINK
+        preparation = self._preparation_item(
+            graph, node.tdoc_id, node.working_group, node.meeting, base_state,
+            metadata_resolved=any(locator.locator_type == "metadata"
+                                  for locator in node.locators))
+        contribution_state = self._contribution_evidence_state(
+            node, contribution_links, preparation)
+        provenance = TDocStatusProvenance(
+            canonical_tdoc_source_identity=node.source_identity,
+            canonical_tdoc_source_identities=sorted(
+                {item.source_identity for item in canonical_nodes}),
+            chair_note_source_identities=self._link_identities(chair_links),
+            contribution_evidence_source_identities=self._link_identities(contribution_links),
+            meeting_evidence_source_identities=self._link_identities(meeting_links),
+            cross_meeting_source_identities=self._link_identities(cross_links),
+            preparation_source_identities=self._preparation_identities(
+                node.working_group, node.tdoc_id, node.meeting),
+        )
+        versions = dict(graph.versions)
+        versions["tdoc_explicit_link_status_schema"] = (
+            rules.TDOC_EXPLICIT_LINK_STATUS_SCHEMA_VERSION)
+        logical = {
+            "schema_version": rules.TDOC_EXPLICIT_LINK_STATUS_SCHEMA_VERSION,
+            "graph_id": graph.graph_id,
+            "graph_checksum": graph.graph_checksum,
+            "node_id": node.node_id,
+            "tdoc_id": node.tdoc_id.upper(),
+            "working_group": node.working_group.value,
+            "metadata_meeting": node.meeting,
+            "document_role": node.document_role.value if node.document_role else None,
+            "chair_note_discussion_link_state": self._presence(chair_links).value,
+            "contribution_semantic_evidence_state": contribution_state.value,
+            "meeting_explicit_link_state": self._presence(meeting_links).value,
+            "cross_meeting_reference_state": self._presence(cross_links).value,
+            "preparation_state": preparation.model_dump(mode="json"),
+            "provenance_identities": provenance.model_dump(mode="json"),
+            "versions": versions,
+            "limitations": [
+                "NO_EXPLICIT_LINK records only the absence of a qualifying explicit link "
+                "in the available inspected sources; it is not negative evidence.",
+                "Each coverage axis is independent and does not overwrite another axis.",
+            ],
+        }
+        return TDocExplicitLinkStatus(
+            **logical, record_checksum=rules.identity(logical))
+
+    def _preparation_item(self, graph, tdoc_id, group, meeting,
+                          base_state, *, metadata_resolved=False) -> LinkPreparationItem:
+        metadata = self._find_preferred_metadata(group, tdoc_id, meeting)
+        receipt = self.repository.get_document_receipt(
+            tdoc_id, group, meeting) if meeting else None
+        parameters = [tdoc_id, group.value] + ([meeting] if meeting else [])
+        semantic = self.connection.execute(
+            "SELECT status FROM semantic_evidence_state WHERE upper(tdoc_id)=upper(?) "
+            "AND working_group=?" + (" AND meeting_number=?" if meeting else ""),
+            parameters).fetchone()
+        if metadata is None and not metadata_resolved:
+            state, fetch, reason = (
+                LinkCoverageState.SOURCE_MISSING, None, "metadata source is unresolved")
+        elif receipt is None:
+            state = LinkCoverageState.BODY_NOT_LOCAL
+            fetch = (metadata.availability.value == "downloadable"
+                     if metadata is not None else None)
+            reason = ("contribution body is not local; any acquisition remains an "
+                      "explicit separate action")
+        elif semantic is None or semantic[0] != "EXTRACTED":
+            state, fetch = LinkCoverageState.SEMANTIC_EVIDENCE_NOT_EXTRACTED, False
+            reason = "local body has no fresh SemanticEvidence extraction"
+        else:
+            state, fetch, reason = base_state, False, "available local evidence was inspected"
+        return LinkPreparationItem(
+            tdoc_id=tdoc_id.upper(), meeting=meeting, coverage_state=state,
+            body_fetch_needed=fetch,
+            normalization_needed=bool(receipt and not receipt.normalized_path),
+            index_needed=self._index_needed(receipt),
+            semantic_extraction_needed=bool(
+                receipt and (semantic is None or semantic[0] != "EXTRACTED")),
+            meeting_evidence_missing=not any(
+                link.target_node.tdoc_id
+                and link.target_node.tdoc_id.upper() == tdoc_id.upper()
+                and link.target_node.meeting == meeting
+                and link.source_node.kind is EvidenceNodeKind.SEMANTIC_EVIDENCE
+                and link.source_node.evidence_scope is EvidenceScope.MEETING
+                and link.kind is not ExplicitLinkKind.SAME_TDOC for link in graph.links),
+            reason=reason,
+        )
+
+    @staticmethod
+    def _presence(links) -> ExplicitLinkPresenceState:
+        return (ExplicitLinkPresenceState.EXPLICIT_LINK_PRESENT if links
+                else ExplicitLinkPresenceState.NO_EXPLICIT_LINK)
+
+    @staticmethod
+    def _contribution_evidence_state(node, links, preparation):
+        if links:
+            return ContributionSemanticEvidenceState.SEMANTIC_EVIDENCE_AVAILABLE
+        if node.document_role is not DocumentRole.CONTRIBUTION:
+            return ContributionSemanticEvidenceState.NOT_APPLICABLE
+        if preparation.coverage_state is LinkCoverageState.SOURCE_MISSING:
+            return ContributionSemanticEvidenceState.SOURCE_MISSING
+        if preparation.coverage_state is LinkCoverageState.BODY_NOT_LOCAL:
+            return ContributionSemanticEvidenceState.BODY_NOT_LOCAL
+        if preparation.semantic_extraction_needed:
+            return ContributionSemanticEvidenceState.SEMANTIC_EVIDENCE_NOT_EXTRACTED
+        return ContributionSemanticEvidenceState.NO_SEMANTIC_EVIDENCE
+
+    @staticmethod
+    def _link_identities(links) -> list[str]:
+        return sorted({identity for link in links for identity in (
+            link.source_node.source_identity, link.target_node.source_identity,
+            *(locator.source_identity for locator in link.locators))})
+
+    def _preparation_identities(self, group, tdoc_id, meeting) -> list[str]:
+        identities: list[str] = []
+        filters = [tdoc_id, group.value] + ([meeting] if meeting else [])
+        suffix = " AND meeting_number=?" if meeting else ""
+        queries = [
+            ("document", "SELECT raw_checksum,normalized_checksum,normalization_identity_json "
+             "FROM tdoc_documents WHERE upper(tdoc_id)=upper(?) AND working_group=?" + suffix),
+            ("index", "SELECT normalized_checksum,index_schema_version,tokenizer_version,status "
+             "FROM search_index_state WHERE upper(tdoc_id)=upper(?) AND working_group=?" + suffix),
+            ("semantic", "SELECT normalization_identity_json,normalized_checksum,"
+             "evidence_schema_version,ruleset_version,evidence_checksum,status "
+             "FROM semantic_evidence_state WHERE upper(tdoc_id)=upper(?) AND working_group=?"
+             + suffix),
+        ]
+        for layer, query in queries:
+            for row in self.connection.execute(query, filters).fetchall():
+                identities.append(f"{layer}:" + rules.identity(list(row)))
+        return sorted(set(identities))
+
+    @staticmethod
+    def _is_cross_meeting_reference(link, node) -> bool:
+        node_is_endpoint = (link.source_node.node_id == node.node_id
+                            or link.target_node.node_id == node.node_id)
+        semantic_belongs_to_node = (
+            link.source_node.kind is EvidenceNodeKind.SEMANTIC_EVIDENCE
+            and link.source_node.tdoc_id
+            and node.tdoc_id
+            and link.source_node.tdoc_id.upper() == node.tdoc_id.upper()
+            and link.source_node.meeting == node.meeting)
+        if not node_is_endpoint and not semantic_belongs_to_node:
+            return False
+        if link.kind is ExplicitLinkKind.SAME_TDOC:
+            return False
+        if link.kind is ExplicitLinkKind.DISCUSSION_REFERENCE:
+            source_meeting = link.discussion_meeting
+        elif (link.source_node.kind is EvidenceNodeKind.SEMANTIC_EVIDENCE
+              and link.source_node.evidence_scope is EvidenceScope.MEETING):
+            source_meeting = link.authority_meeting or link.source_meeting
+        else:
+            source_meeting = link.source_meeting or link.source_node.meeting
+        target_meeting = link.metadata_meeting or link.target_node.meeting
+        return bool(source_meeting and target_meeting and source_meeting != target_meeting)
 
     def _all_metadata(self, group: WorkingGroup, *, tdoc_ids: Sequence[str] = (),
                       meetings: Sequence[str] = ()) -> list[TDocMetadata]:

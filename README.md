@@ -16,7 +16,7 @@ Chair Note  Meeting evidence
 
 The graph preserves discussion, evidence-source, and metadata meetings separately. For example, a Chair Note from `RAN1#125` may explicitly reference `R1-2603427` whose resolved metadata meeting is `RAN1#124bis`. This cross-meeting edge establishes the literal document reference only. A meeting Agreement that names `R1-2601985` likewise establishes a document-level reference; its separate disposition does not apply automatically to every statement in that TDoc.
 
-Use `show-tdoc-links`, `show-meeting-links`, or `show-topic-links` for read-only local views. `build-explicit-links` persists a compact rebuildable graph under `data/derived/links/`. `plan-link-preparation` reports missing metadata, bodies, indexes, or SemanticEvidence without executing acquisition or extraction. None of these commands downloads a contribution, Chair Note, TDoc list, or meeting report.
+Use `show-tdoc-links`, `show-meeting-links`, or `show-topic-links` for read-only local views. `build-explicit-links` persists a compact rebuildable graph and a per-canonical-TDoc status artifact under `data/derived/links/`. The status artifact records Chair Note, contribution evidence, meeting link, cross-meeting, and preparation states independently; `NO_EXPLICIT_LINK` is never negative evidence. `plan-link-preparation` reports missing metadata, bodies, indexes, or SemanticEvidence without executing acquisition or extraction. None of these commands downloads a contribution, Chair Note, TDoc list, or meeting report.
 
 ## V0.7 historical coverage
 
