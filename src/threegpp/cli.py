@@ -210,6 +210,17 @@ def build_parser() -> argparse.ArgumentParser:
     show_tdoc_study.add_argument(
         "--provenance", action="store_true",
         help="include internal evidence references, links, states, and identities")
+    complete_tdoc = subparsers.add_parser(
+        "complete-tdoc-evidence",
+        help="explicitly complete local evidence for one TDoc; may download its body")
+    _add_wg(complete_tdoc)
+    complete_tdoc.add_argument("--tdoc", required=True)
+    complete_tdoc.add_argument("--retention", choices=["cache", "pinned"], default="cache")
+    complete_tdoc.add_argument("--offline", action="store_true",
+                               help="reuse local artifacts only; never download")
+    complete_tdoc.add_argument("--meeting", help="expected official metadata meeting")
+    complete_tdoc.add_argument("--discussion-meeting",
+                               help="discussion meeting provenance for historical resolution")
     show_meeting_links = subparsers.add_parser(
         "show-meeting-links", help="show local explicit links for one metadata meeting")
     _add_wg_meeting(show_meeting_links)
@@ -294,6 +305,23 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "complete-tdoc-evidence":
+        from threegpp.completion import (
+            TDocEvidenceCompletionRequest, TDocEvidenceCompletionService,
+            render_completion_result,
+        )
+        from threegpp.documents.models import RetentionState
+        from threegpp.ingest import HTTPDownloader
+        with MetadataRepository(args.db) as repository, HTTPDownloader() as downloader:
+            result = TDocEvidenceCompletionService(
+                repository, args.data_dir, downloader).complete(
+                    TDocEvidenceCompletionRequest(
+                        working_group=args.wg, tdoc_id=args.tdoc,
+                        retention=RetentionState(args.retention), offline=args.offline,
+                        expected_metadata_meeting=args.meeting,
+                        discussion_meeting=args.discussion_meeting))
+            print(render_completion_result(result), end="")
+        return 0 if result.failure is None else 1
     if args.command == "show-tdoc-study":
         from threegpp.study_view import TDocStudyService, render_tdoc_study
         with MetadataRepository(args.db) as repository:

@@ -1,5 +1,25 @@
 # Architecture
 
+## V0.9 selective evidence completion
+
+`threegpp.completion` orchestrates the existing metadata resolver, one-item
+`TDocFetchPlan`, document service, lexical indexer, SemanticEvidence extractor,
+explicit-link service, and study view. Only `complete-tdoc-evidence` authorizes
+body acquisition. The service processes one canonical TDoc identity and does
+not expand through topic or discussion links.
+
+Each stage reports completion, reuse, blockage, or failure independently. A
+valid cached raw artifact remains the upstream source when normalization,
+index, or evidence state is missing or stale. The service persists no parallel
+evidence store; it uses existing receipts and derived artifacts and refreshes a
+targeted TDoc link/status graph after extraction.
+
+The workflow relies on the existing immutable-byte conflict checks and atomic
+artifact writes. V0.9 adds no cross-process lock, so separate concurrent
+requests for the same missing TDoc are not guaranteed to coalesce into one
+network request. One completion operation never intentionally schedules the
+same TDoc twice.
+
 ## V0.8 explicit-link layer
 
 `threegpp.study_view` derives an on-demand research view with Discussion,

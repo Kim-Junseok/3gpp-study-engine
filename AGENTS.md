@@ -18,3 +18,9 @@ and Meeting outcome. Do not expose graph, link, or status terminology unless
 the user requests engine internals. Absence from a selected Chair Note does
 not prove that a TDoc was not discussed. Absence of an explicit meeting-outcome
 reference is not rejection and does not prove that no meeting outcome exists.
+
+Read-only study commands must never fetch contribution bodies. A user request
+that explicitly requires the technical content of a specific TDoc may authorize
+selective completion through the V0.9 workflow unless the user requests
+offline, local-only, or no-download behavior. Do not extend that authorization
+to unrelated TDocs.

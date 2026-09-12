@@ -103,13 +103,17 @@ meeting outcome.
 ## Content inspection and V0.9 boundary
 
 Answering what a TDoc proposes, observes, or concludes requires its content. If
-the body is absent, V0.8.1 marks content inspection as required and performs no
-download. V0.9 may implement selective acquisition, normalization, indexing,
-and extraction. Under that future policy, a request for technical TDoc content
-authorizes inspection of the necessary body unless the user requests an
-offline, metadata-only, or no-download workflow.
+the body is absent, the read-only view marks content inspection as required.
+V0.9 performs selective acquisition only through the explicit completion
+workflow. A direct request for the technical content of a specific TDoc may
+authorize that action unless the user requests an offline, metadata-only, or
+no-download workflow.
 
-The current document model defines `CACHE` and `PINNED` retention. A future
-on-demand workflow may retain a requested body as `CACHE` and explicitly promote
-research-essential material to `PINNED`. V0.8.1 changes no retention behavior
-and implements no automatic deletion.
+After successful normalization and contribution SemanticEvidence extraction,
+the view changes to `TDoc content inspected: Yes`. This remains true when the
+current rules extract zero qualifying statements. A failure or stale extraction
+keeps the value `No`.
+
+The document model defines `CACHE` and `PINNED` retention. V0.9 retains a newly
+requested body as `CACHE` and uses `PINNED` only on explicit request. It does not
+automatically delete or prune either state.

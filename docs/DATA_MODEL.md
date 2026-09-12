@@ -1,5 +1,21 @@
 # Data model
 
+## V0.9 evidence completion
+
+`TDocEvidenceCompletionRequest` identifies one working group and TDoc. It also
+records optional historical meeting context, `CACHE` or `PINNED` retention,
+offline authorization, and the conservative `IF_STALE` refresh policy.
+
+`TDocEvidenceCompletionResult` contains separate metadata, body,
+normalization, index, semantic-extraction, and link/status stage results. Its
+logical identity depends on the request, resolved metadata, final source
+identities, final inspection state, and study-view identity. Operational
+download-versus-reuse details and timestamps do not change that identity.
+
+The model adds no source or evidence store. Raw artifacts, document receipts,
+index state, SemanticEvidence, explicit-link status, and `TDocStudyView` retain
+their existing storage contracts.
+
 ## V0.8 explicit links
 
 `TDocStudyView` is a non-persisted read model with `DiscussionView`,

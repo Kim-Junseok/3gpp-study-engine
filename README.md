@@ -13,6 +13,28 @@ Use `show-tdoc-study --wg <WG> --tdoc <ID>` for this view. It reports whether a 
 
 V0.8 supplies the deterministic document/reference-level links beneath this view. It connects contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
 
+## V0.9 selective evidence completion
+
+A question about what one TDoc proposes, observes, or concludes requires its
+technical content. Run the explicit completion action when that content has not
+been inspected:
+
+```bash
+python -m threegpp.cli complete-tdoc-evidence \
+  --wg RAN1 \
+  --tdoc R1-2604142
+```
+
+The command resolves official metadata, prepares only the named TDoc, retains a
+new body as `CACHE`, normalizes it, indexes it, extracts contribution
+SemanticEvidence, refreshes its targeted link status, and rebuilds the study
+view. Use `--retention pinned` for explicit durable preservation. Use
+`--offline` to permit local processing while prohibiting downloads.
+
+`show-tdoc-study` and the other study, link, history, and planning commands
+remain read-only. A title, organization, Chair Note context, or meeting outcome
+cannot substitute for inspection of the contribution body.
+
 ## V0.8 explicit evidence linkage
 
 V0.8 builds links only when a grounded source supplies a literal TDoc/meeting reference or an existing structural contract establishes the parent TDoc. `DISCUSSION_REFERENCE` means that a bounded Chair Note discussion context explicitly references a TDoc. `EXPLICIT_TDOC_REFERENCE` means that SemanticEvidence or metadata literally names a TDoc. Reply, revision, and supersession kinds require those cue words in the source. `SAME_TDOC` binds contribution SemanticEvidence to its parent document.

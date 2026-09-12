@@ -83,7 +83,7 @@ class EvidenceExtractionService:
         self.data_root = Path(data_root)
 
     def extract_document(self, receipt: DocumentReceipt) -> EvidenceExtractionOutcome:
-        metadata = self.repository.get_tdoc(receipt.working_group, receipt.meeting, receipt.tdoc_id)
+        metadata = _metadata_for_receipt(self.repository, receipt)
         classification = classify_document_role(metadata)
         identity = _identity_json(receipt)
         key = [receipt.tdoc_id, receipt.working_group.value, receipt.meeting]
@@ -454,7 +454,7 @@ class EvidenceExtractionService:
         if row is None:
             return None
         receipt = DocumentReceipt.model_validate_json(row[0])
-        metadata = self.repository.get_tdoc(receipt.working_group, receipt.meeting, receipt.tdoc_id)
+        metadata = _metadata_for_receipt(self.repository, receipt)
         expected = (
             _metadata_identity(metadata), _identity_json(receipt), receipt.normalized_checksum,
             EVIDENCE_SCHEMA_VERSION, EXTRACTION_RULESET_VERSION,
@@ -527,9 +527,7 @@ class EvidenceExtractionService:
             [
                 receipt.tdoc_id, receipt.working_group.value, receipt.meeting, status,
                 classification.role.value, json.dumps(classification.basis),
-                _metadata_identity(self.repository.get_tdoc(
-                    receipt.working_group, receipt.meeting, receipt.tdoc_id
-                )),
+                _metadata_identity(_metadata_for_receipt(self.repository, receipt)),
                 identity if identity is not None else _identity_json(receipt),
                 receipt.normalized_checksum, EVIDENCE_SCHEMA_VERSION,
                 EXTRACTION_RULESET_VERSION, str(evidence_path) if evidence_path else None,
@@ -538,6 +536,17 @@ class EvidenceExtractionService:
                 datetime.now(timezone.utc), error,
             ],
         )
+
+
+def _metadata_for_receipt(repository, receipt):
+    metadata = repository.get_tdoc(
+        receipt.working_group, receipt.meeting, receipt.tdoc_id)
+    if metadata is not None:
+        return metadata
+    from threegpp.historical import HistoricalMetadataResolver
+    resolution = HistoricalMetadataResolver(repository).resolve(
+        receipt.working_group, receipt.tdoc_id, expected_meeting=receipt.meeting)
+    return resolution.selected.metadata if resolution.selected is not None else None
 
 
 def _match_label(text: str):

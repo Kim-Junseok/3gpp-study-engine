@@ -7,11 +7,13 @@ from pathlib import Path
 
 from threegpp.db import MetadataRepository
 from threegpp.evidence import EvidenceExtractionService
+from threegpp.historical import HistoricalMetadataResolver
+from threegpp.historical.models import HistoricalResolutionState
 from threegpp.links import (
     EvidenceLinkGraph, EvidenceNodeKind, ExplicitLinkKind, ExplicitLinkService,
     LinkCoverageState,
 )
-from threegpp.models import EvidenceExtractionRequest, EvidenceScope, TDocQuery, WorkingGroup
+from threegpp.models import EvidenceExtractionRequest, EvidenceScope, WorkingGroup
 
 from .models import (
     ContributionEvidenceView, ContributionView, DiscussionReferenceView, DiscussionView,
@@ -45,21 +47,24 @@ class TDocStudyService:
         self.links = ExplicitLinkService(repository, data_root)
         self.evidence = EvidenceExtractionService(repository, data_root)
 
-    def build(self, working_group: WorkingGroup | str, tdoc_id: str) -> TDocStudyView:
+    def build(self, working_group: WorkingGroup | str, tdoc_id: str, *,
+              metadata_meeting: str | None = None,
+              discussion_meeting: str | None = None) -> TDocStudyView:
         group = WorkingGroup.parse(working_group)
         wanted = tdoc_id.strip().upper()
-        metadata_records = self.repository.query_tdocs(TDocQuery(
-            working_groups=[group], tdoc_id=wanted))
-        if len(metadata_records) > 1:
-            raise ValueError("TDoc ID is ambiguous in canonical-current metadata")
-        metadata = metadata_records[0] if metadata_records else None
+        resolution = HistoricalMetadataResolver(self.repository).resolve(
+            group, wanted, discussion_meeting=discussion_meeting,
+            expected_meeting=metadata_meeting)
+        if resolution.state is HistoricalResolutionState.AMBIGUOUS:
+            raise ValueError("TDoc ID is ambiguous in current/historical official metadata")
+        metadata = resolution.selected.metadata if resolution.selected else None
         meeting = metadata.meeting if metadata else None
 
         targeted = self.links.build_for_tdoc(group, wanted)
         graphs = self._relevant_graphs(group, wanted, targeted)
         contribution_evidence = self.evidence.list_evidence(EvidenceExtractionRequest(
-            working_groups=[group], tdoc_ids=[wanted], scopes=[EvidenceScope.CONTRIBUTION],
-            limit=5000))
+            working_groups=[group], meetings=[meeting] if meeting else [],
+            tdoc_ids=[wanted], scopes=[EvidenceScope.CONTRIBUTION], limit=5000))
         discussion = self._discussion(graphs, wanted, meeting)
         contribution = ContributionView(
             content_inspected=self._content_inspected(group, wanted, meeting),

@@ -5,6 +5,24 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.9 content-required questions
+
+Separate read-only questions from questions that require contribution content.
+Use local Discussion or Meeting outcome evidence for questions about Chair Note
+references, submitter, title, meeting, or explicit agreement references. Do not
+fetch the contribution for those questions.
+
+Questions about what a specific TDoc proposes, argues, observes, concludes, or
+says technically require inspected contribution content. If the study view says
+`TDoc content inspected: No`, invoke `complete-tdoc-evidence --wg <WG> --tdoc
+<ID>` unless the user requested metadata-only, offline, local-only, or
+no-download behavior. This authorization applies only to the named TDoc. Use
+`--offline` when network acquisition is prohibited.
+
+Do not answer a contribution-content question from its title, organization,
+Chair Note context, or meeting outcome. After completion, answer from the
+Contribution-scoped SemanticEvidence in the standard three-section study view.
+
 ## V0.8.1 research-facing TDoc view
 
 For a user-facing question about one TDoc, run `show-tdoc-study --wg <WG>

@@ -1,5 +1,36 @@
 # Study workflow
 
+## Read-only study and on-demand inspection
+
+```text
+Research question
+     ↓
+Does the answer require contribution content?
+     ├─ No → use local evidence
+     └─ Yes
+          ↓
+     Is the content already inspected?
+          ├─ Yes → reuse it
+          └─ No
+               ↓
+          complete-tdoc-evidence
+               ↓
+          CACHE acquisition when authorized
+               ↓
+          normalize → index → extract
+               ↓
+          rebuild the three-section study view
+```
+
+The completion command handles exactly one named TDoc. `--offline` reuses valid
+local raw content and repairs downstream state without network access. If the
+body is missing, offline mode reports a preparation gap. `LISTED_ONLY`,
+`UNKNOWN`, unresolved, and ambiguous metadata never cause a guessed download.
+
+Valid raw and normalized artifacts remain after a downstream failure. A retry
+resumes from the first missing or stale stage. The current refresh policy is
+`IF_STALE`; V0.9 does not force remote refresh or delete cached evidence.
+
 ## Explicit evidence linkage
 
 For a TDoc-centered research question, build the read view from the locally

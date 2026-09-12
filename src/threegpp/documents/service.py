@@ -107,6 +107,12 @@ class DocumentService:
             raise DownloadConflictError(
                 "cached raw artifact provenance conflicts with fetch plan or receipt"
             )
+        effective_retention = (
+            RetentionState.PINNED
+            if existing and RetentionState.PINNED in {existing.raw.retention, item.retention}
+            else item.retention
+        )
+        raw = raw.model_copy(update={"retention": effective_retention})
         inspected = inspect_package(raw_path.read_bytes(), raw_path.name)
         identity = NormalizationIdentity(
             raw_sha256=digest,
@@ -119,11 +125,6 @@ class DocumentService:
             normalized_schema_version=self.normalized_schema_version,
         )
         if existing and existing.normalization_identity == identity and self._normalized_outputs_valid(existing):
-            effective_retention = (
-                RetentionState.PINNED
-                if RetentionState.PINNED in {existing.raw.retention, item.retention}
-                else RetentionState.CACHE
-            )
             if existing.raw.retention is not effective_retention:
                 existing = existing.model_copy(
                     update={"raw": existing.raw.model_copy(update={"retention": effective_retention})}

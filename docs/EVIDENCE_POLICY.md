@@ -1,5 +1,18 @@
 # Evidence policy
 
+## V0.9 contribution inspection
+
+Metadata, a title, organization attribution, Chair Note context, and
+meeting-outcome text do not establish what a contribution itself proposes,
+observes, concludes, or leaves for further study. Only fresh
+contribution-scoped SemanticEvidence extracted from inspected contribution
+content may populate those categories.
+
+A successful extraction with zero qualifying statements still establishes that
+the available contribution content was inspected under the current rules. A
+failed or stale extraction does not. On-demand preparation never promotes a
+contribution statement to meeting authority.
+
 ## V0.8.1 research-facing wording
 
 - Referenced in discussion does not mean agreed.
