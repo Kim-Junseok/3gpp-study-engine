@@ -21,6 +21,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/normalized/*
 !data/normalized/.gitkeep
+data/derived/
 data/manifests/*
 !data/manifests/.gitkeep
 data/*.duckdb*

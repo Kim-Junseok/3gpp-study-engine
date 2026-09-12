@@ -1,5 +1,47 @@
 # Architecture
 
+## V0.8 explicit-link layer
+
+`threegpp.study_view` derives an on-demand research view with Discussion,
+Contribution, and Meeting outcome sections. It reads existing metadata,
+`SemanticEvidence`, Chair Note references, explicit links, and per-TDoc status.
+It persists no evidence and performs no acquisition. Normal output hides backend
+graph terminology; provenance mode exposes it for audit.
+
+`threegpp.links` consumes fresh local `SemanticEvidence`, `DiscussionRecord`, and official metadata records. It creates stable `EvidenceNodeRef` values and versioned `ExplicitEvidenceLink` edges. The service recognizes literal TDoc and meeting references, existing Chair Note associations, contribution evidence's structural parent TDoc, and explicit reply/revision/supersession wording. It does not compare statement meaning.
+
+The link graph retains source locators, source identities, normalized and raw meeting roles, resolution state, and literal basis. Link and graph identities include source identities, `explicit-link-v1`, and the V0.7 meeting-alias ruleset. A changed checksum, metadata record, semantic source identity, link ruleset, or alias ruleset therefore changes the derived graph identity.
+
+`data/derived/links/<wg>/<scope>/graph.json.gz` contains a compact deterministic graph. Each persisted graph also writes `data/derived/links/<wg>/<graph-id>/tdoc-status.jsonl.gz`. The latter contains one independently dimensioned status record per canonical TDoc node. DuckDB stores node/link IDs, kinds, meeting/TDoc keys, source identities, provenance keys, ruleset versions, and checksums for both artifacts. Full contribution and Chair Note bodies remain outside DuckDB. All graph inputs are local; source preparation remains an explicit separate workflow.
+
+The authority path remains unchanged:
+
+```text
+Official TDoc List → metadata authority
+Chair Note → positive discussion context
+Contribution TDoc → company-scoped SemanticEvidence
+Meeting report/minutes → meeting-scoped SemanticEvidence
+```
+
+An explicit reference chain may connect these layers through one TDoc. The core does not convert that chain into proposal equivalence, company stance, or adoption of a particular contribution statement.
+
+## V0.7 historical range layer
+
+```text
+explicit meeting range
+ -> V0.6 per-meeting Chair Note coverage
+ -> canonical-current + stored official snapshot metadata resolver
+ -> HistoricalTopicCoverage
+ -> HistoricalCorpusExpansionPlan
+ -> existing TDocFetchPlan
+```
+
+`threegpp.historical` is offline. Its versioned meeting adapter maps `b` to `bis` only as identifier normalization and preserves raw notation. The source adapter resolves normalized requests through the advertised official directory list, so a `124bis` request can retain the literal `TSGR1_124b` URL. Numeric suffix ordering gives `124 < 124bis < 125`; explicit ranges have a configurable meeting-count bound and insert only locally known suffixed meetings.
+
+The resolver reads canonical-current records before stored official list snapshots. A current exact record wins over a historical duplicate. Incompatible candidates at the same precedence tier yield `AMBIGUOUS` with every candidate. Snapshot candidates retain URL, checksum, role, timestamp, and exact metadata; canonical-current state is unchanged.
+
+Missing Chair Notes, unnormalized snapshots, and ambiguous selection are isolated to one meeting. Completeness describes selected source coverage only. Corpus planning deduplicates resolved bodies while retaining cross-meeting discussion edges and can compile a batch to `TDocFetchPlan`. It never executes acquisition, indexing, or semantic extraction. V0.8 proposition linkage and technical synthesis are outside this layer.
+
 ## Stable boundaries
 
 V0.2a.3 preserves the accepted boundaries:
@@ -60,3 +102,70 @@ RAN1 and RAN2 share a directory adapter configured by group path, meeting prefix
 On opening a V0.1–V0.2a.1 DuckDB file, the repository adds snapshot tables and marks existing normalized records current. V0.2a.1 manifests load with empty role data rather than fabricated roles. A new all-snapshot ingestion establishes canonical current while preserving earlier metadata and availability evidence.
 
 V0.2a.2 embedded-row manifests remain readable. Migration is deliberately explicit: `threegpp migrate-manifest --manifest ...` writes deterministic snapshot/current JSONL.gz files and a new slim V0.2a.3 receipt without modifying the legacy receipt or downloading sources. A hydrated V0.2a.3 manifest can re-import its normalized rows into DuckDB.
+
+## V0.3 search boundary
+
+```text
+Normalized TDocs → block lexical index → EvidenceSearchQuery
+                 → EvidenceSearchHit → EvidenceRef → exact normalized block
+```
+
+`threegpp.search` owns the disposable `search_blocks`, `search_postings`, and
+`search_index_state` DuckDB tables. Complete body text remains in normalized
+files. Matching normalization identity and schema/tokenizer versions reuse an
+index; changed identity replaces only that TDoc. Missing or checksum-conflicting
+evidence evicts postings and becomes stale. Ranking is block BM25 (`k1=1.2`,
+`b=0.75`, positive probabilistic IDF), plus explicit phrase, heading, and title
+bonuses. Metadata can boost only a block with body query evidence. All operations
+are offline and cause zero TDoc downloads.
+
+## V0.4 explicit semantic evidence boundary
+
+```text
+Official raw evidence → normalized blocks → EvidenceRef → SemanticEvidence
+```
+
+`threegpp.evidence` scans one checksum-verified normalized document at a time.
+Centralized, versioned rules recognize explicit labels, bounded heading sections,
+table labels, and narrow sentence cues. Deterministic document-role classification
+gates authority: contributions may yield contribution proposals, observations,
+conclusions, and FFS; accepted meeting reports may yield meeting agreements,
+conclusions, decisions, and FFS. Agenda, chair, and unknown roles yield none.
+
+Portable evidence JSONL.gz is derived and rebuildable. DuckDB stores its receipt,
+query columns, short literal statements, and evidence JSON—not complete source
+documents. Queries validate metadata identity, normalization identity/checksum,
+rule/schema versions, derived checksum, and every referenced block/span. Invalid
+sets become stale and cannot return evidence. Extraction and querying are offline.
+The semantic evidence schema is version `1`; the centralized extraction ruleset
+is `explicit-structural-v2`, with stable individual rule IDs at version `1`.
+Meeting-record authority is member-scoped: normalized document/PDF members may
+emit meeting evidence, while bundled participant and TDoc-list spreadsheets remain
+searchable normalized data but cannot inherit meeting-report semantic authority.
+
+## V0.5 analytical layer
+
+```text
+Official raw evidence -> Normalized blocks -> EvidenceRef -> SemanticEvidence
+ -> authority meeting + disposition + bounded context -> TopicEvidenceBundle
+ -> evidence-grounded Skill synthesis
+```
+
+The core reads current normalized, indexed, and semantic derived state and never persists narrative synthesis. Timelines aggregate meeting outcomes by **authority meeting**, while retaining the metadata **discovery meeting**. Contribution evidence remains grouped only by stored source organization and is never promoted to a meeting outcome.
+
+## V0.6 Chair Note coverage layer
+
+```text
+Official TDoc List -> Chair Note snapshots -> bounded topic sections
+ -> literal TDoc references -> positive discussion coverage
+ -> topic corpus expansion plan -> existing selective TDoc fetch
+ -> normalization -> lexical evidence -> SemanticEvidence -> TopicEvidenceBundle
+```
+
+`DirectorySource.discover_chair_notes` examines only the meeting's advertised `Inbox` and recognized case-insensitive Chair Note directory name. It preserves the exact directory URL and performs directory discovery only. Chair Note bytes are acquired separately by `ChairNoteService.fetch`; immutable raw files, slim receipts, and content-bound normalized blocks occupy Chair Note-specific runtime paths. Package inspection, parser selection, block shape, and checksum-conflict behavior reuse the document layer.
+
+Every normalized block locator is a `ChairNoteRef` bound to a snapshot ID, normalization ID, normalized checksum, member, block, structure, and optional page/sheet/row/cell/character coordinates. Resolution revalidates raw and normalized checksums, current parser/schema identity, block identity, and coordinates. Coverage is computed on demand, so rule or metadata changes produce new deterministic identities rather than reusing stale associations.
+
+Prose associations are bounded by heading, member, table, and a 200-block safety cap. Unheaded text and text-native PDF pages remain block-local; table associations remain row-local. These conservative boundaries prefer missing an association to leaking references from unrelated sections.
+
+Chair Note coverage never writes SemanticEvidence and never calls `DocumentService.execute`. An explicit selection may be compiled through `FetchPlanner` into the accepted `TDocFetchPlan`; executing that plan remains a separate user action.

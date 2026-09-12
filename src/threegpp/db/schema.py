@@ -97,6 +97,146 @@ CREATE TABLE IF NOT EXISTS tdoc_documents (
     receipt_json VARCHAR NOT NULL,
     PRIMARY KEY (tdoc_id, working_group, meeting_number)
 );
+
+-- Derived and rebuildable V0.3 lexical index.  Authoritative block text remains
+-- in normalized/document.jsonl.gz and is deliberately absent from these tables.
+CREATE TABLE IF NOT EXISTS search_index_state (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    normalization_identity_json VARCHAR,
+    normalized_path VARCHAR,
+    normalized_checksum VARCHAR,
+    index_schema_version VARCHAR NOT NULL,
+    tokenizer_version VARCHAR NOT NULL,
+    indexed_block_count INTEGER NOT NULL DEFAULT 0,
+    posting_count INTEGER NOT NULL DEFAULT 0,
+    indexed_at TIMESTAMPTZ,
+    error VARCHAR,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number)
+);
+
+CREATE TABLE IF NOT EXISTS search_blocks (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    member_filename VARCHAR NOT NULL,
+    block_id VARCHAR NOT NULL,
+    block_type VARCHAR NOT NULL,
+    heading_path_json VARCHAR NOT NULL,
+    page_number INTEGER,
+    sheet_name VARCHAR,
+    token_count INTEGER NOT NULL,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number, member_filename, block_id)
+);
+
+CREATE TABLE IF NOT EXISTS search_postings (
+    term VARCHAR NOT NULL,
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    member_filename VARCHAR NOT NULL,
+    block_id VARCHAR NOT NULL,
+    term_frequency INTEGER NOT NULL,
+    PRIMARY KEY (term, tdoc_id, working_group, meeting_number, member_filename, block_id)
+);
+
+-- Derived V0.4 semantic evidence. Full normalized documents remain external.
+CREATE TABLE IF NOT EXISTS semantic_evidence_state (
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    document_role VARCHAR NOT NULL,
+    document_role_basis_json VARCHAR NOT NULL,
+    metadata_identity_json VARCHAR NOT NULL,
+    normalization_identity_json VARCHAR,
+    normalized_checksum VARCHAR,
+    evidence_schema_version VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    evidence_path VARCHAR,
+    evidence_checksum VARCHAR,
+    evidence_count INTEGER NOT NULL DEFAULT 0,
+    blocks_scanned INTEGER NOT NULL DEFAULT 0,
+    explicit_labels_detected INTEGER NOT NULL DEFAULT 0,
+    candidates_rejected INTEGER NOT NULL DEFAULT 0,
+    ambiguous_cues_ignored INTEGER NOT NULL DEFAULT 0,
+    extracted_at TIMESTAMPTZ,
+    error VARCHAR,
+    PRIMARY KEY (tdoc_id, working_group, meeting_number)
+);
+
+CREATE TABLE IF NOT EXISTS semantic_evidence (
+    evidence_id VARCHAR PRIMARY KEY,
+    tdoc_id VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR NOT NULL,
+    kind VARCHAR NOT NULL,
+    scope VARCHAR NOT NULL,
+    document_role VARCHAR NOT NULL,
+    source_organizations_json VARCHAR NOT NULL,
+    label VARCHAR,
+    ordinal INTEGER,
+    detection_basis VARCHAR NOT NULL,
+    rule_id VARCHAR NOT NULL,
+    rule_version VARCHAR NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    statement_text VARCHAR NOT NULL,
+    evidence_json VARCHAR NOT NULL
+);
+
+-- Derived V0.8 explicit-reference graph. Full document and Chair Note bodies
+-- remain in their portable source layers; this index contains locators only.
+CREATE TABLE IF NOT EXISTS explicit_link_graph_state (
+    graph_id VARCHAR PRIMARY KEY,
+    working_group VARCHAR NOT NULL,
+    scope_json VARCHAR NOT NULL,
+    link_schema_version VARCHAR NOT NULL,
+    graph_schema_version VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    graph_path VARCHAR NOT NULL,
+    graph_checksum VARCHAR NOT NULL,
+    artifact_checksum VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS explicit_link_nodes (
+    graph_id VARCHAR NOT NULL,
+    node_id VARCHAR NOT NULL,
+    node_kind VARCHAR NOT NULL,
+    working_group VARCHAR NOT NULL,
+    meeting_number VARCHAR,
+    tdoc_id VARCHAR,
+    source_identity VARCHAR NOT NULL,
+    PRIMARY KEY (graph_id, node_id)
+);
+
+CREATE TABLE IF NOT EXISTS explicit_evidence_links (
+    graph_id VARCHAR NOT NULL,
+    link_id VARCHAR NOT NULL,
+    link_kind VARCHAR NOT NULL,
+    source_node_id VARCHAR NOT NULL,
+    target_node_id VARCHAR NOT NULL,
+    literal_basis VARCHAR NOT NULL,
+    discussion_meeting VARCHAR,
+    source_meeting VARCHAR,
+    discovery_meeting VARCHAR,
+    authority_meeting VARCHAR,
+    metadata_meeting VARCHAR,
+    resolution_state VARCHAR NOT NULL,
+    ruleset_version VARCHAR NOT NULL,
+    PRIMARY KEY (graph_id, link_id)
+);
+
+CREATE TABLE IF NOT EXISTS explicit_link_tdoc_status_state (
+    graph_id VARCHAR PRIMARY KEY,
+    status_schema_version VARCHAR NOT NULL,
+    status_path VARCHAR NOT NULL,
+    status_checksum VARCHAR NOT NULL,
+    artifact_checksum VARCHAR NOT NULL,
+    record_count INTEGER NOT NULL,
+    source_identity_checksum VARCHAR NOT NULL
+);
 """
 
 

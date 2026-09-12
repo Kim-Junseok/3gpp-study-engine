@@ -40,6 +40,10 @@ class ThreeGPPSource(ABC):
     @abstractmethod
     def get_tdoc(self, meeting: str, tdoc_id: str) -> TDocMetadata: ...
 
+    def discover_chair_notes(self, meeting: str):
+        """Discover snapshots only; fetching their bytes is a separate action."""
+        raise SourceError("Chair Note discovery is not supported by this source")
+
 
 class DirectorySource(ThreeGPPSource):
     BASE_URL = "https://www.3gpp.org/ftp/tsg_ran/"
@@ -86,9 +90,32 @@ class DirectorySource(ThreeGPPSource):
         return urljoin(self.BASE_URL, f"{self.group_directory}/")
 
     def meeting_url(self, meeting: str) -> str:
-        from threegpp.models import normalize_meeting_identifier
+        from threegpp.models import normalize_meeting_identifier, normalize_source_meeting_identifier
 
         meeting = normalize_meeting_identifier(meeting)
+        if not meeting.endswith("bis"):
+            return urljoin(self.group_url, f"{self.meeting_prefix}{meeting}/")
+        matches: list[tuple[str, str]] = []
+        prefix = self.meeting_prefix.lower()
+        for name, url in self._links(self.group_url):
+            if not name.lower().startswith(prefix):
+                continue
+            raw_identifier = name[len(self.meeting_prefix) :]
+            try:
+                normalized = normalize_source_meeting_identifier(raw_identifier)
+            except ValueError:
+                continue
+            if normalized == meeting:
+                matches.append((raw_identifier, url))
+        exact = [url for raw, url in matches if raw.casefold() == meeting.casefold()]
+        if len(exact) == 1:
+            return exact[0]
+        if len(matches) == 1:
+            return matches[0][1]
+        if len(matches) > 1:
+            raise SourceError(
+                f"multiple official meeting directories resolve to {self.working_group.value}#{meeting}"
+            )
         return urljoin(self.group_url, f"{self.meeting_prefix}{meeting}/")
 
     def _get_html(self, url: str) -> str:
@@ -136,6 +163,8 @@ class DirectorySource(ThreeGPPSource):
         return self.parse_links(self._get_html(url), url)
 
     def list_meetings(self) -> list[Meeting]:
+        from threegpp.models import normalize_source_meeting_identifier
+
         prefix = self.meeting_prefix.lower()
         results: dict[str, Meeting] = {}
         for name, url in self._links(self.group_url):
@@ -143,9 +172,10 @@ class DirectorySource(ThreeGPPSource):
                 continue
             identifier = name[len(self.meeting_prefix) :]
             try:
+                normalized = normalize_source_meeting_identifier(identifier)
                 meeting = Meeting(
                     working_group=self.working_group,
-                    meeting_number=identifier,
+                    meeting_number=normalized,
                     meeting_name=f"{self.working_group.value}#{identifier}",
                     source_url=url,
                 )
@@ -155,13 +185,16 @@ class DirectorySource(ThreeGPPSource):
         return sorted(results.values(), key=lambda item: _meeting_sort_key(item.meeting_number))
 
     def get_meeting_metadata(self, meeting: str) -> Meeting:
+        from threegpp.models import normalize_source_meeting_identifier
+
         url = self.meeting_url(meeting)
         self._get_html(url)
-        normalized = PurePosixPath(urlparse(url).path).name[len(self.meeting_prefix) :]
+        raw_identifier = PurePosixPath(urlparse(url).path).name[len(self.meeting_prefix) :]
+        normalized = normalize_source_meeting_identifier(raw_identifier)
         return Meeting(
             working_group=self.working_group,
             meeting_number=normalized,
-            meeting_name=f"{self.working_group.value}#{normalized}",
+            meeting_name=f"{self.working_group.value}#{raw_identifier}",
             source_url=url,
         )
 
@@ -201,6 +234,31 @@ class DirectorySource(ThreeGPPSource):
 
     def get_agenda(self, meeting: str) -> list[SourceArtifact]:
         return self._artifacts_from_named_directories(meeting, ["Agenda"], ArtifactType.AGENDA)
+
+    def discover_chair_notes(self, meeting: str):
+        from threegpp.chair_notes.rules import CHAIR_NOTE_DIRECTORY_NAMES, discovered_snapshot
+        from threegpp.models import normalize_meeting_identifier
+
+        meeting = normalize_meeting_identifier(meeting)
+        now = datetime.now(UTC)
+        snapshots = {}
+        for name, inbox_url in self._meeting_links(meeting):
+            if name.casefold() != "inbox":
+                continue
+            for directory_name, directory_url in self._links(inbox_url):
+                if directory_name.casefold() not in CHAIR_NOTE_DIRECTORY_NAMES:
+                    continue
+                for _, file_url in self._directory_files(directory_url):
+                    path = urlparse(file_url).path
+                    # Only direct files in the advertised directory, never nested crawls.
+                    if path.endswith("/") or not PurePosixPath(path).suffix:
+                        continue
+                    if PurePosixPath(path).parent != PurePosixPath(urlparse(directory_url).path):
+                        continue
+                    snapshot = discovered_snapshot(self.working_group, meeting, file_url,
+                                                   directory_url, now)
+                    snapshots[snapshot.snapshot_id] = snapshot
+        return sorted(snapshots.values(), key=lambda item: str(item.artifact.official_url))
 
     def get_meeting_report(self, meeting: str) -> list[SourceArtifact]:
         return self._artifacts_from_named_directories(

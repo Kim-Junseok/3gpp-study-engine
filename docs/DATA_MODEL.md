@@ -1,5 +1,49 @@
 # Data model
 
+## V0.8 explicit links
+
+`TDocStudyView` is a non-persisted read model with `DiscussionView`,
+`ContributionView`, and `MeetingOutcomeView`. Its deterministic identity depends
+on the metadata, evidence, links, and status values included in the view. It
+references literal source statements and provenance already held by the accepted
+layers; it does not create another evidence store.
+
+`EvidenceNodeRef` identifies a TDoc metadata record, `SemanticEvidence`, `DiscussionRecord`, or literal meeting reference. It stores a stable node ID, working group, meeting, TDoc ID where applicable, source artifact and identity, and compact `SourceLocator` values. Locators contain `EvidenceRef`, `ChairNoteRef`, or metadata field provenance; nodes do not copy full source bodies.
+
+`ExplicitEvidenceLink` stores source and target nodes, literal basis, locator, discussion/source/metadata meetings, resolution state, deterministic confidence, and the independent link ruleset version. Its kinds are `SAME_TDOC`, `EXPLICIT_TDOC_REFERENCE`, `EXPLICIT_MEETING_REFERENCE`, `EXPLICIT_REPLY_REFERENCE`, `EXPLICIT_REVISION_REFERENCE`, `EXPLICIT_SUPERSESSION_REFERENCE`, and `DISCUSSION_REFERENCE`. `AgreementDisposition` is a separate optional field and never changes the link kind.
+
+`EvidenceLinkGraph` deduplicates nodes while retaining separate edges for separate source locators. It reports source identities, resolution coverage, structural counts, and `COMPLETE_FOR_AVAILABLE_EVIDENCE`, `PARTIAL_EVIDENCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`. Schema versions are explicit-link `1`, graph `1`, preparation plan `1`, and per-TDoc status `1`; the current ruleset is `explicit-link-v2`. A TDoc-centered build prefers one exact canonical-current metadata record over compatible stored snapshot variants while retaining their provenance. Incompatible candidates remain ambiguous.
+
+`TDocExplicitLinkStatus` is persisted once for each resolved canonical TDoc node. It records Chair Note discussion links, contribution SemanticEvidence, meeting explicit links, cross-meeting references, and preparation as independent dimensions. Each record retains the canonical node identity, dimension-specific source identities, graph identity, independent status-schema version, and record checksum. `NO_EXPLICIT_LINK` means only that the available inspected sources supplied no qualifying explicit link on that dimension. It is not negative evidence.
+
+For example:
+
+```text
+Chair Note RAN1#125 / ChairNoteRef
+  → DISCUSSION_REFERENCE "R1-2603427"
+  → TDoc metadata RAN1#124bis
+```
+
+The edge preserves both meeting roles and does not establish continuity. Similarly:
+
+```text
+Meeting Agreement / EvidenceRef
+  → EXPLICIT_TDOC_REFERENCE "R1-2601985"
+  → TDoc metadata
+```
+
+If the Agreement disposition is `ENDORSE`, the graph reports it beside the edge. It does not identify every contribution statement as endorsed.
+
+An unresolved literal reference remains an edge to an unresolved TDoc node. Multiple incompatible metadata records yield `AMBIGUOUS_REFERENCE`, retain candidate nodes, and prevent a definitive target. `LinkPreparationPlan` reports body, normalization, index, SemanticEvidence, and meeting-evidence gaps and always has `executes_actions=false`.
+
+## V0.7 historical coverage
+
+`MeetingAlias` stores working group, normalized identifier, raw notation, alias source, and ruleset version. `HistoricalMetadataCandidate` pairs exact `TDocMetadata` with its source layer and, for archived rows, official snapshot URL, checksum, roles, and timestamp. `HistoricalMetadataResolution` records discussion meeting and expected metadata meeting separately, its state, selection, every inspected candidate, basis, and resolver version.
+
+`HistoricalCoverageRequest` requires one working group, inclusive start/end meetings, a lexical query, optional per-meeting snapshot IDs, limits, and a range bound. `HistoricalTopicCoverage` contains ordered per-meeting wrappers around unchanged V0.6 `TopicDiscussionCoverage`. Completeness is `COMPLETE_FOR_SELECTED_SOURCES`, `PARTIAL_SOURCE_COVERAGE`, or `SOURCE_PREPARATION_REQUIRED`; none asserts technical completeness.
+
+`HistoricalCorpusExpansionPlan` contains one item per resolved body identity. Each item retains all `HistoricalDiscussionEdge` values and their original `DiscussionRecord`/`ChairNoteRef`. Availability remains `DOWNLOADABLE`, `LISTED_ONLY`, or `UNKNOWN`. Eligible IDs are deterministically batched at the existing `FetchPlanner` limit. Derived identities cover requests, source-derived coverage, candidates, checksums, and independent V0.7 rule/schema versions.
+
 ## Provenance layers
 
 1. Directory discovery: TDoc identity and archive URL.
@@ -29,11 +73,71 @@ Identity is `(working_group, meeting, tdoc_id)`. Null or empty incoming fields n
 
 The V0.2a organization/availability migration remains in place. V0.2a.1 manifests load with empty snapshot-role data. Existing normalized rows remain current until an all-snapshot ingestion establishes a newer canonical view; old artifacts are not assigned roles without new classification evidence. V0.2a.2 embedded rows can be explicitly externalized without fabricating absent values or snapshot roles.
 
-## Reserved semantic distinctions
+## Semantic distinctions
 
-Company proposal, company observation, discussion, meeting agreement, meeting conclusion, and FFS/unresolved issue remain separate future evidence entities. “Samsung proposed X” must never become “RAN1 agreed X” without separate meeting-agreement evidence.
+Company proposal, company observation, discussion, meeting agreement, meeting conclusion, and FFS/unresolved issue remain separate evidence concepts. “Samsung proposed X” must never become “RAN1 agreed X” without separate meeting-scope agreement evidence from an accepted meeting report.
 # V0.2b document models
 
 `TDocFetchPlan` contains exact identities, official URLs when known, availability, per-item selection reasons, and retention state. `RawArtifact` records URL, path, retrieval time, media type, byte count, and SHA-256. A package has zero or more `PackageMember` records; a probable primary is assigned only when exactly one supported member exists.
 
 `NormalizedTDoc` contains member parser/status information, warnings, deterministic blocks, flattened text, and source linkage. Blocks are numbered globally in package order as `b000001`, `b000002`, and so on and retain member, page, heading path, sheet, and table/row context. `NormalizationIdentity` combines the raw SHA-256, each member's parser name/version, and the normalized-document schema version; cache reuse requires exact equality. `DocumentReceipt` contains that identity plus paths, independent block/text checksums, counts, parser versions, retention, and warnings—not body text. DuckDB indexes the receipt status, checksums, identity/schema, retention, and derived-output path while body content remains in portable files.
+
+# V0.3 retrieval models
+
+`EvidenceSearchQuery` carries lexical text and optional WG, meeting, TDoc,
+organization, block-type, extraction-status, and retention filters.
+`EvidenceRef` locates one member/block with type, heading path, page, and sheet.
+`EvidenceSearchHit` adds literal snippet, metadata, matched terms, phrase/match
+kind, and decomposed score. `TDocSearchHit` derives its best block, block count,
+and aggregate score from block hits.
+
+DuckDB `search_blocks` stores locators and token lengths; `search_postings` stores
+term frequencies; `search_index_state` stores normalization identity, versions,
+counts, status, and indexing time. Complete bodies are never stored there. Search
+schema and tokenizer versions are independently set to `1`.
+
+# V0.4 semantic evidence models
+
+`EvidenceKind` distinguishes proposal, observation, agreement, conclusion, FFS,
+and decision. `EvidenceScope` separates contribution statements from meeting
+records. `DocumentRoleClassification` records a conservative role and its basis;
+`DetectionBasis` records explicit label, heading context, table label, or explicit
+sentence cue. `EvidenceSpan` wraps an exact `EvidenceRef` with sequence and
+optional character or table row/cell coordinates. `SemanticEvidence` retains
+literal statement text, rule identity, source attribution, normalization identity,
+and deterministic evidence ID.
+
+Evidence IDs are `ev-` plus the first 24 hexadecimal SHA-256 characters over
+canonical JSON containing schema/ruleset versions, TDoc, kind/scope, spans,
+label/ordinal, and rule ID/version. Unchanged inputs produce identical IDs.
+
+`semantic_evidence_state` is the lifecycle/provenance receipt. It records document
+role, metadata and normalization identities, checksums, versions, diagnostics,
+portable output, and count. `semantic_evidence` provides query columns plus short
+literal statement/evidence JSON. Neither table stores a complete TDoc body.
+
+## V0.5 topic evidence
+
+`MeetingAuthority` preserves discovery meeting, optional authority meeting, raw title notation, basis, rule/version, and source TDoc. Only a recognized meeting-report title can resolve a different authority; `124b` is the explicit report-title alias of metadata form `124bis`.
+
+`DispositionEvidence` is subordinate to `AGREEMENT + MEETING` and contains `STUDY`, `ADOPT`, `SELECT`, `ENDORSE`, `REUSE`, `DEFER`, or `UNCLASSIFIED`, plus cue, rule, and span. `EvidenceContext` retains literal labelled nearby notes/conditions/exceptions/FFS with its own EvidenceRef; it is not SemanticEvidence. Literal TDoc links do not imply the referenced content.
+
+`TopicStudyRequest` supplies optional layer and provenance filters. `TopicEvidenceBundle` separates lexical candidates, organization-grouped contributions, meeting evidence, authority timeline, unresolved relationships, deterministic identity, and coverage. Schema, authority, disposition, and context are independently versioned.
+
+Local acceptance revisions use topic schema `2`, authority rules `meeting-authority-v1`, disposition rules `agreement-disposition-v2`, and context rules `evidence-context-v1`. Disposition and identifier matches point to the body span containing the literal cue (with character offsets for paragraph spans), rather than a preceding standalone Agreement label. Pending selection cues such as “to be selected” and “down-select from” remain UNCLASSIFIED; they do not establish a completed selection.
+
+On-demand study identity includes the logical bundle (excluding extraction timestamps), request, independent rule versions, and scoped semantic-state metadata/normalization identities and checksums. No topic cache or persistent study table exists. Changes to source content can change study identity even when V0.4 evidence IDs remain stable. Literal references to unrelated TDocs do not remove unresolved contribution relationships.
+
+## V0.6 Chair Note and coverage models
+
+`ChairNoteArtifact` preserves working group, meeting, official URL/filename, exact source directory, deterministic artifact ID, discovery time, and rule version. `ChairNoteSnapshot` adds deterministic snapshot ID, raw label, conservative role, raw retrieval/checksum, parser and normalization identity, normalized checksum/path, extraction status, block count, and literal-reference count. Multiple snapshot receipts and outputs coexist under their snapshot IDs. `EOM` is distinct from `EXPLICIT_FINAL`; conflicting or missing labels are `UNKNOWN`.
+
+`ChairNoteRef` is separate from TDoc-only `EvidenceRef`. It identifies one snapshot normalization, member, block, heading/page/sheet, optional table row/cell, and optional character span. A stale checksum, parser/schema identity, missing block, or mismatched coordinates makes the reference unresolvable.
+
+`DiscussionSection` contains literal topic anchors, heading path, bounded start/end refs, block count, and referenced identifiers. `DiscussionRecord` binds a topic anchor to one literal `TDocReference` with `SAME_BLOCK`, `SAME_TABLE_ROW`, or `SAME_DISCUSSION_SECTION` basis and versioned rules.
+
+`TopicDiscussionCoverage` separates `CHAIR_NOTE_CONFIRMED`, `METADATA_RELEVANT_ONLY`, and unresolved/ambiguous references. Resolution distinguishes current-meeting metadata, other-known metadata, unresolved identity, and ambiguous multi-meeting identity. Unknown fields remain null; no current-meeting identity is invented.
+
+`TopicCorpusExpansionPlan` retains official metadata, availability, ChairNoteRefs, association basis, raw/checksum state, normalization, index and semantic states, fetch need/eligibility, and reason. Only explicitly selected `DOWNLOADABLE` items may compile to the existing `TDocFetchPlan`; compilation revalidates the deterministic plan identity.
+
+Versions are independent: Chair Note schema `2`, discovery `chair-note-discovery-v1`, snapshot interpretation `chair-note-snapshot-v1`, discussion sections `discussion-section-v3`, TDoc references `tdoc-reference-v2`, and corpus expansion schema `1`. The V0.6 live rules accept official Word-table text where a TDoc identifier and title are concatenated (for example, `R1-2605236HARQ...`) and recover an explicit uppercase acronym joined to an organization abbreviation while preserving the literal source text and exact locator.

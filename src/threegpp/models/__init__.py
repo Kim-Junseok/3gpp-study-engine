@@ -6,12 +6,34 @@ from .document import (
     TDocMetadata,
     merge_tdoc_metadata,
 )
-from .meeting import Meeting, WorkingGroup, normalize_meeting_identifier
+from .evidence import (
+    DetectionBasis,
+    DocumentRole,
+    DocumentRoleClassification,
+    EvidenceExtractionOutcome,
+    EvidenceExtractionRequest,
+    EvidenceKind,
+    EvidenceScope,
+    EvidenceSpan,
+    SemanticEvidence,
+)
+from .meeting import (Meeting, WorkingGroup, normalize_meeting_identifier,
+                      normalize_report_meeting_identifier, normalize_source_meeting_identifier)
+from .topic import (
+    AgreementDisposition, ContextRole, DispositionEvidence, EvidenceContext,
+    EvidenceLink, EvidenceLinkType, MeetingAuthority, MeetingAuthorityBasis,
+    MeetingIdentity, MeetingTimelineEntry, TopicCoverage, TopicEvidenceBundle,
+    TopicEvidenceItem, TopicStudyRequest,
+)
 from .parse import SpreadsheetParseResult, SpreadsheetParseSummary
 from .query import TDocQuery
 from .source import ArtifactType, SourceArtifact
 from .snapshot import SnapshotRole, TDocListSnapshot
 from .storage import NormalizedOutput
+from .search import (
+    EvidenceRef, EvidenceSearchHit, EvidenceSearchQuery, IndexOutcome, MatchKind,
+    TDocSearchHit,
+)
 from .study import (
     CandidateInventory,
     CandidateTDoc,
@@ -24,6 +46,14 @@ from .study import (
 )
 
 __all__ = [
+    "DetectionBasis",
+    "DocumentRole",
+    "DocumentRoleClassification",
+    "EvidenceExtractionOutcome",
+    "EvidenceExtractionRequest",
+    "EvidenceKind",
+    "EvidenceScope",
+    "EvidenceSpan",
     "ArtifactType",
     "CandidateInventory",
     "CandidateTDoc",
@@ -38,6 +68,7 @@ __all__ = [
     "TDocAvailability",
     "SourceArtifact",
     "SnapshotRole",
+    "SemanticEvidence",
     "SnapshotCoverage",
     "SpreadsheetParseResult",
     "SpreadsheetParseSummary",
@@ -47,6 +78,18 @@ __all__ = [
     "TDocQuery",
     "TopicMatchEvidence",
     "WorkingGroup",
+    "EvidenceRef",
+    "EvidenceSearchHit",
+    "EvidenceSearchQuery",
+    "IndexOutcome",
+    "MatchKind",
+    "TDocSearchHit",
     "merge_tdoc_metadata",
     "normalize_meeting_identifier",
+    "normalize_report_meeting_identifier",
+    "normalize_source_meeting_identifier",
+    "AgreementDisposition", "ContextRole", "DispositionEvidence", "EvidenceContext",
+    "EvidenceLink", "EvidenceLinkType", "MeetingAuthority", "MeetingAuthorityBasis",
+    "MeetingIdentity", "MeetingTimelineEntry", "TopicCoverage", "TopicEvidenceBundle",
+    "TopicEvidenceItem", "TopicStudyRequest",
 ]
