@@ -1,5 +1,27 @@
 # Study vocabulary
 
+## Topic and source terminology
+
+Use these terms for a new-topic study:
+
+| Term | Meaning |
+|---|---|
+| User term | Wording supplied by the researcher |
+| Exact lexical variant | The same tokens with deterministic case, punctuation, or hyphen/space formatting |
+| Source terminology candidate | A literal phrase observed near seed tokens in selected prepared sources; it is awaiting review |
+| Accepted source term | A source phrase explicitly selected for direct retrieval |
+| Related terminology | Diagnostic source wording kept outside the direct topic corpus |
+
+Do not describe a source candidate as a synonym or equivalent concept. Default
+output may say, “Source terminology observed: …” and then identify which terms
+the inventory uses. Provenance output may show occurrence counts, locators,
+retrieval-support scores, and identities.
+
+For company lists, use source-bounded wording: “Within the selected meetings,
+selected source snapshots, and accepted topic terminology profile, the
+following Chair-note-associated TDocs were found.” Authorship metadata does not
+establish support, opposition, or any other company stance.
+
 This guide defines the default research-facing vocabulary for a study of one
 3GPP TDoc. The engine retains its provenance and link models internally. The
 normal study view translates those models into three researcher questions:

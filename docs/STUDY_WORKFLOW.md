@@ -1,5 +1,31 @@
 # Study workflow
 
+## New-topic first pass
+
+For a topic without an accepted terminology profile, run the offline bootstrap
+before broad historical retrieval:
+
+1. Supply the literal researcher terms and a bounded meeting range to
+   `bootstrap-topic`.
+2. Inspect observed source phrases and their provenance. Case and hyphen/space
+   variants are safe lexical variants; other phrases remain candidates.
+3. Use `update-topic-profile --accept`, `--related`, or `--reject` to record an
+   explicit decision in a new immutable profile.
+4. Run `show-topic-profile` to apply user seeds, exact variants, and accepted
+   source terms to historical coverage and build the company/TDoc inventory.
+5. Invoke V0.9 completion only when the user asks what a selected contribution
+   says and its content has not been inspected.
+
+The same profile can be applied to a later meeting with `--from-meeting` and
+`--to-meeting`. Accepted terms drive that request. Newly observed phrases stay
+separate candidates until another explicit profile revision. Related and
+rejected terms do not add TDocs to the direct corpus.
+
+Bootstrap and profile operations read prepared sources only. Missing Chair
+Notes, ambiguous snapshots, unnormalized snapshots, and missing metadata remain
+explicit source-coverage limitations. These operations never download a
+contribution body.
+
 ## Read-only study and on-demand inspection
 
 ```text

@@ -13,6 +13,37 @@ Use `show-tdoc-study --wg <WG> --tdoc <ID>` for this view. It reports whether a 
 
 V0.8 supplies the deterministic document/reference-level links beneath this view. It connects contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
 
+## V0.10 new-topic terminology bootstrap
+
+The new-topic workflow discovers wording that prepared official sources
+actually use before it broadens retrieval:
+
+```text
+New topic → discover official source terminology → review and accept terms
+          → find TDocs and organizations → inspect content only when needed
+```
+
+`bootstrap-topic` reads selected local Chair Notes, official metadata titles,
+and already-normalized local documents. It generates only deterministic
+case, punctuation, and hyphen/space variants. Token-local source phrases remain
+candidates until a researcher promotes them with `update-topic-profile`.
+Related terms stay outside the direct topic corpus.
+
+```bash
+python -m threegpp.cli bootstrap-topic --wg RAN1 \
+  --from-meeting 125 --to-meeting 126 \
+  --term CBUL --term "contention-based uplink"
+python -m threegpp.cli update-topic-profile \
+  --profile <profile-id> --accept "contention based PUSCH"
+python -m threegpp.cli show-topic-profile --profile <new-profile-id>
+```
+
+Profiles are deterministic retrieval configuration stored under
+`data/derived/topics/`, which Git ignores. Bootstrap, profile revision, and
+profile inventory perform no download. Source co-occurrence does not establish
+technical equivalence, and company grouping reports metadata authorship rather
+than company stance.
+
 ## V0.9 selective evidence completion
 
 A question about what one TDoc proposes, observes, or concludes requires its
@@ -65,7 +96,7 @@ Range coverage reuses V0.6 once per meeting. Missing sources and ambiguous snaps
 
 ## Milestone status
 
-**Current development milestone: V0.8 explicit evidence linkage.**
+**Current development milestone: V0.10 topic terminology bootstrap.**
 
 ```text
 3GPP meeting
@@ -229,7 +260,8 @@ The rebuildable DuckDB search index stores block locators, token counts, and ter
 - V0.6 — Chair Note guided discussion coverage and topic-corpus expansion planning
 - V0.7 — Historical metadata resolution and meeting-range Chair Note coverage
 - V0.8 — Explicit document/reference-level evidence linkage
-- V0.9 — Semantic proposition equivalence and cross-company/cross-meeting analysis (future)
+- V0.9 — On-demand evidence completion
+- V0.10 — Topic bootstrap and source terminology profiles
 - V1.0 — General RAN1/RAN2 research workflow
 
 ## V0.5 offline topic evidence

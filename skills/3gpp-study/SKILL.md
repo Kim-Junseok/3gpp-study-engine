@@ -5,6 +5,31 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.10 unknown-topic bootstrap
+
+For a new topic, first check whether the local runtime has an accepted topic
+profile. If none exists, run `bootstrap-topic` over the requested prepared
+meeting range. Present user terms, exact formatting variants, observed source
+candidates, and related diagnostic terms separately. Do not add model-generated
+synonyms or silently accept a candidate.
+
+Record the researcher's explicit decisions with `update-topic-profile`. Then
+use `show-topic-profile` to build the source-limited company/TDoc inventory.
+Only user seeds, exact variants, and accepted source terms may drive the direct
+corpus. Related and rejected terms remain outside it. If the profile is applied
+to a later meeting, report newly observed candidates separately.
+
+Use Topic, Source terminology, Discussion, Contribution, and Meeting outcome
+as the research-facing labels. State briefly which accepted terms affected
+retrieval. Keep candidate states, retrieval-support scores, and internal IDs in
+provenance output unless the user requests engine details.
+
+Bootstrap and profile use perform zero contribution-body downloads. Invoke the
+V0.9 completion workflow only after the user asks a contribution-content
+question. Source-term co-occurrence is not semantic equivalence, metadata-title
+relevance is not discussion evidence, and profile inclusion is not company
+stance.
+
 ## V0.9 content-required questions
 
 Separate read-only questions from questions that require contribution content.

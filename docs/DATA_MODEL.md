@@ -1,5 +1,32 @@
 # Data model
 
+## V0.10 terminology profiles
+
+`TopicBootstrapRequest` defines a working group, bounded meeting range, user
+terms, optional initial decisions, selected Chair Note snapshots, source policy,
+and candidate limit. `TopicBootstrapResult` stores the deterministic terms,
+source coverage, source-class and meeting occurrence counts, TDoc
+distributions, limitations, and bootstrap identity.
+
+Each `TopicTerm` has one state: `USER_SEED`, `EXACT_VARIANT`,
+`SOURCE_CANDIDATE`, `ACCEPTED_SOURCE_TERM`, `RELATED_ONLY`, or `REJECTED`.
+Every source-derived occurrence retains its literal phrase, source class,
+meeting, source identity, file/member/block/table coordinates, character span,
+associated TDoc when present, and compact source reference. Its retrieval
+support score counts observable retrieval signals; it is not confidence of
+technical equivalence.
+
+`TopicTerminologyProfile` is deterministic retrieval configuration. Its
+checksum excludes operational timestamps and covers the term decisions,
+source identities, range, bootstrap identity, and versions. Explicit decisions
+produce a new immutable profile identity and retain the parent identity.
+
+`TopicProfileInventory` preserves each query group and literal source locator.
+Its TDoc rows report Chair Note association, metadata-only relevance,
+contribution inspection, and explicit meeting-outcome reference independently.
+Official metadata supplies organization grouping. The model contains no
+company-position or proposition-equivalence field.
+
 ## V0.9 evidence completion
 
 `TDocEvidenceCompletionRequest` identifies one working group and TDoc. It also

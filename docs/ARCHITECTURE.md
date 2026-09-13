@@ -1,5 +1,35 @@
 # Architecture
 
+## V0.10 topic terminology layer
+
+`threegpp.topics` adds a retrieval-configuration layer above prepared official
+sources. `TopicBootstrapService` reads selected normalized Chair Notes,
+official metadata titles, and already-normalized contribution or meeting-record
+blocks. It never invokes source discovery, a downloader, or V0.9 completion.
+
+```text
+user term
+  → deterministic token-local source discovery
+  → source candidates with literal locators
+  → explicit researcher decision
+  → deterministic TopicTerminologyProfile
+  → existing historical coverage per direct term
+  → company/TDoc inventory
+```
+
+Exact variants change only case, punctuation, or hyphen/space formatting.
+Observed phrases are not semantic synonyms. The profile keeps user seeds,
+exact variants, accepted source terms, related terms, and rejected terms as
+separate states. Only the first three groups drive direct retrieval. Historical
+coverage still distinguishes selected-Chair-Note associations from metadata
+title relevance.
+
+Profiles are compact JSON artifacts under
+`data/derived/topics/<wg>/<profile-id>/topic-profile.json`. Their identities
+include the normalized request, term decisions, source identities, meeting
+range, and independent schema/ruleset versions. The inventory reuses the V0.7
+coverage and V0.8.1 study view; it does not recompute evidence authority.
+
 ## V0.9 selective evidence completion
 
 `threegpp.completion` orchestrates the existing metadata resolver, one-item

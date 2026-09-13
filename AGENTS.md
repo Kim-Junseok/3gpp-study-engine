@@ -24,3 +24,8 @@ that explicitly requires the technical content of a specific TDoc may authorize
 selective completion through the V0.9 workflow unless the user requests
 offline, local-only, or no-download behavior. Do not extend that authorization
 to unrelated TDocs.
+
+For a new research topic, do not silently expand the user's wording through
+semantic similarity or model-generated synonyms. Use the topic bootstrap and
+source-terminology profile workflow. Keep observed candidate terms distinct
+from source terms that the researcher explicitly accepts.

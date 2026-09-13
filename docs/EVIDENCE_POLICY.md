@@ -1,5 +1,26 @@
 # Evidence policy
 
+## V0.10 terminology boundary
+
+A topic terminology profile changes retrieval configuration only. It does not
+change source authority or create evidence. It is neither a terminology
+standard nor a semantic ontology. Apply these rules:
+
+```text
+source-term co-occurrence ≠ semantic equivalence
+metadata-title relevance ≠ discussion evidence
+topic-profile inclusion ≠ company position
+source candidate ≠ accepted source term
+related-only term ≠ direct topic corpus term
+```
+
+Only explicit researcher decisions promote an observed candidate to an
+accepted source term. Repetition and retrieval-support score cannot promote a
+term. Missing selected sources produce a coverage limitation; absence of a term
+from those sources does not establish that the term or topic does not exist.
+Chair Notes, contribution documents, meeting reports, and TDoc lists retain
+their existing authority roles.
+
 ## V0.9 contribution inspection
 
 Metadata, a title, organization attribution, Chair Note context, and

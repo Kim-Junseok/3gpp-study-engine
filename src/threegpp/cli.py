@@ -230,6 +230,31 @@ def build_parser() -> argparse.ArgumentParser:
     prepare_links = subparsers.add_parser(
         "plan-link-preparation", help="report missing local inputs without executing preparation")
     _add_link_scope_arguments(prepare_links)
+    bootstrap = subparsers.add_parser(
+        "bootstrap-topic", help="discover terminology in prepared local sources; never downloads")
+    _add_topic_profile_scope(bootstrap, require_range=True)
+    bootstrap.add_argument("--term", action="append", required=True,
+                           help="researcher wording; may be repeated")
+    bootstrap.add_argument("--topic-label")
+    bootstrap.add_argument("--accepted-term", action="append", default=[])
+    bootstrap.add_argument("--related-term", action="append", default=[])
+    bootstrap.add_argument("--candidate-limit", type=int, default=40)
+    bootstrap.add_argument("--provenance", action="store_true")
+    show_profile = subparsers.add_parser(
+        "show-topic-profile", help="show a saved topic profile and offline TDoc/company inventory")
+    show_profile.add_argument("--profile", required=True)
+    show_profile.add_argument("--from-meeting")
+    show_profile.add_argument("--to-meeting")
+    show_profile.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID")
+    show_profile.add_argument("--limit", type=int, default=100)
+    show_profile.add_argument("--provenance", action="store_true")
+    update_profile = subparsers.add_parser(
+        "update-topic-profile", help="create a deterministic profile revision from explicit decisions")
+    update_profile.add_argument("--profile", required=True)
+    update_profile.add_argument("--accept", action="append", default=[])
+    update_profile.add_argument("--related", action="append", default=[])
+    update_profile.add_argument("--reject", action="append", default=[])
+    update_profile.add_argument("--provenance", action="store_true")
     return parser
 
 
@@ -291,6 +316,13 @@ def _add_link_scope_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-meetings", type=int, default=24)
 
 
+def _add_topic_profile_scope(parser: argparse.ArgumentParser, *, require_range: bool) -> None:
+    _add_wg(parser)
+    parser.add_argument("--from-meeting", required=require_range)
+    parser.add_argument("--to-meeting", required=require_range)
+    parser.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID")
+
+
 def source_for(value: str) -> ThreeGPPSource:
     working_group = WorkingGroup.parse(value)
     return RAN1Source() if working_group is WorkingGroup.RAN1 else RAN2Source()
@@ -305,6 +337,40 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"bootstrap-topic", "show-topic-profile", "update-topic-profile"}:
+        from threegpp.topics import (
+            TopicBootstrapRequest, TopicProfileDecision, TopicProfileService,
+            render_bootstrap, render_profile,
+        )
+        with MetadataRepository(args.db) as repository:
+            service = TopicProfileService(repository, args.data_dir)
+            if args.command == "bootstrap-topic":
+                snapshots = _snapshot_arguments(args.snapshot)
+                result, profile = service.bootstrap_and_persist(TopicBootstrapRequest(
+                    working_group=args.wg, from_meeting=args.from_meeting,
+                    to_meeting=args.to_meeting, user_terms=args.term,
+                    topic_label=args.topic_label,
+                    accepted_source_terms=args.accepted_term,
+                    related_terms=args.related_term,
+                    source_policy={"chair_note_snapshots": snapshots},
+                    candidate_limit=args.candidate_limit))
+                print(render_bootstrap(result, profile, provenance=args.provenance), end="")
+            elif args.command == "update-topic-profile":
+                if not (args.accept or args.related or args.reject):
+                    raise ValueError("provide at least one --accept, --related, or --reject decision")
+                profile = service.update(TopicProfileDecision(profile_id=args.profile,
+                    accept=args.accept, related=args.related, reject=args.reject))
+                print(render_profile(profile, provenance=args.provenance), end="")
+            else:
+                profile = service.load(args.profile)
+                snapshots = _snapshot_arguments(args.snapshot)
+                if bool(args.from_meeting) != bool(args.to_meeting):
+                    raise ValueError("--from-meeting and --to-meeting must be supplied together")
+                inventory = service.inventory(profile, from_meeting=args.from_meeting,
+                    to_meeting=args.to_meeting, chair_note_snapshots=snapshots,
+                    limit=args.limit)
+                print(render_profile(profile, inventory, provenance=args.provenance), end="")
+        return 0
     if args.command == "complete-tdoc-evidence":
         from threegpp.completion import (
             TDocEvidenceCompletionRequest, TDocEvidenceCompletionService,
@@ -721,6 +787,18 @@ def run(args: argparse.Namespace) -> int:
         if close:
             close()
     return 2
+
+
+def _snapshot_arguments(values: list[str]) -> dict[str, str]:
+    snapshots = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+        meeting, snapshot_id = value.split("=", 1)
+        if not meeting or not snapshot_id:
+            raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
+        snapshots[meeting] = snapshot_id
+    return snapshots
 
 
 def _build_link_graph(service, args):
