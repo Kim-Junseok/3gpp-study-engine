@@ -134,7 +134,8 @@ class TopicBootstrapService:
                                     row_index=row, cell_index=cell,
                                     associated_tdoc_id=references[0] if len(references) == 1 else None,
                                     associated_tdoc_ids=tuple(references),
-                                    organizations=tuple(sorted(organizations, key=str.casefold)),
+                                    organizations=tuple(sorted(
+                                        organizations, key=lambda value: (value.casefold(), value))),
                                     source_ref=ref.model_dump(mode="json")))
             metadata = self._meeting_metadata(request.working_group, meeting)
             if request.source_policy.metadata_titles:
@@ -290,6 +291,10 @@ class TopicBootstrapService:
                         start = segment_base + spans[start_i][1]
                         end = segment_base + spans[end_i - 1][2]
                         literal = passage.text[start:end]
+                        cleaned = rules.strip_joined_organization_suffix(
+                            literal, passage.organizations)
+                        end -= len(literal) - len(cleaned)
+                        literal = cleaned
                         if len(rules.normalized_term(literal).split()) >= 2 and rules.decision_key(literal) not in exact_keys:
                             target = self._record(records, literal, TopicTermState.SOURCE_CANDIDATE,
                                 all_seeds, "observed token window around a seed-token match")
@@ -323,7 +328,8 @@ class TopicBootstrapService:
         key = (rules.decision_key(literal), state)
         if key not in records:
             records[key] = {"literal_text": literal, "state": state,
-                            "seed_terms": sorted(set(seeds), key=str.casefold),
+                            "seed_terms": sorted(
+                                set(seeds), key=lambda value: (value.casefold(), value)),
                             "occurrences": [], "decision_basis": basis}
         return records[key]
 
@@ -368,7 +374,8 @@ class TopicBootstrapService:
                        | {item.locator.associated_tdoc_id for item in occurrences
                           if item.locator.associated_tdoc_id})
         organizations = sorted({organization for item in occurrences
-            for organization in item.locator.associated_organizations}, key=str.casefold)
+            for organization in item.locator.associated_organizations},
+            key=lambda value: (value.casefold(), value))
         chair = sum(item.locator.source_type is TopicSourceType.CHAIR_NOTE for item in occurrences)
         titles = sum(item.locator.source_type is TopicSourceType.METADATA_TITLE for item in occurrences)
         score = len(occurrences) + 3 * len(meetings) + 2 * len(tdocs) + 2 * chair + titles
@@ -513,7 +520,8 @@ class TopicProfileService:
                 continue
             direct.append((term.literal_text, priority[term.state]))
         related = sorted({term.literal_text for term in profile.terms
-                          if term.state is TopicTermState.RELATED_ONLY}, key=str.casefold)
+                          if term.state is TopicTermState.RELATED_ONLY},
+                         key=lambda value: (value.casefold(), value))
         records = {}
         term_found = set()
         completeness = []
@@ -573,7 +581,8 @@ class TopicProfileService:
                 unassigned.append(item)
         companies = [TopicCompanyInventory(organization=organization,
             tdocs=sorted(values, key=lambda item: (item.meeting or "", item.tdoc_id)))
-            for organization, values in sorted(by_company.items(), key=lambda item: item[0].casefold())]
+            for organization, values in sorted(
+                by_company.items(), key=lambda item: (item[0].casefold(), item[0]))]
         extension = self.bootstrapper.bootstrap(TopicBootstrapRequest(
             working_group=profile.working_group, from_meeting=start, to_meeting=end,
             user_terms=profile.user_terms + [term.literal_text for term in profile.terms
@@ -662,7 +671,17 @@ def _direct_candidate(candidate, query):
     associations = [association for association in candidate.associations
                     if _contains_phrase(association.topic_anchor.literal_text, query)]
     if candidate.associations:
-        return candidate.model_copy(update={"associations": associations}) if associations else None
+        if associations:
+            return candidate.model_copy(update={"associations": associations})
+        metadata = candidate.metadata
+        fields = ([metadata.title, metadata.abstract, metadata.agenda_item_description]
+                  if metadata else [])
+        # A normalized Chair Note cell can join a trailing organization to a title.
+        # Retain an independently exact metadata match without treating that joined
+        # Chair Note spelling as the direct-term locator.
+        if any(_contains_phrase(value or "", query) for value in fields):
+            return candidate.model_copy(update={"associations": []})
+        return None
     metadata = candidate.metadata
     fields = ([metadata.title, metadata.abstract, metadata.agenda_item_description]
               if metadata else [])

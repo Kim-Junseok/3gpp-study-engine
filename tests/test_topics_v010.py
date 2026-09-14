@@ -83,6 +83,35 @@ def test_cbul_bootstrap_separates_seed_candidate_and_related_terms(tmp_path):
     assert "Samsung" in {org for item in first.terms for org in item.candidate_organizations}
 
 
+def test_candidate_organization_order_has_literal_tiebreaker(tmp_path):
+    with MetadataRepository(tmp_path / "metadata.duckdb") as repository:
+        repository.upsert_tdoc(metadata("R1-2601001", "126",
+            "contention based PUSCH", "Wisig Networks"))
+        repository.upsert_tdoc(metadata("R1-2601002", "126",
+            "contention based PUSCH", "WiSig Networks"))
+        result = TopicBootstrapService(repository, tmp_path).bootstrap(request())
+    candidate = term(result, "contention based PUSCH", TopicTermState.SOURCE_CANDIDATE)
+    assert candidate.candidate_organizations == ["WiSig Networks", "Wisig Networks"]
+
+
+def test_candidate_strips_organization_joined_to_source_term(tmp_path):
+    install_chair(tmp_path, "126",
+                  "less than threshold, R1-2601001 GNSS resilienceAmazon")
+    with MetadataRepository(tmp_path / "metadata.duckdb") as repository:
+        repository.upsert_tdoc(metadata("R1-2601001", "126",
+            "Unrelated title", "Amazon Web Services"))
+        result = TopicBootstrapService(repository, tmp_path).bootstrap(request(
+            from_meeting="126", user_terms=["GNSS-less"],
+            topic_label="GNSS-less NTN"))
+    candidate = term(result, "GNSS resilience", TopicTermState.SOURCE_CANDIDATE)
+    assert candidate.source_occurrence_count == 1
+    assert not any(item.literal_text == "GNSS resilienceAmazon"
+                   for item in result.terms)
+    assert not any(item.literal_text == "less than"
+                   and item.state is TopicTermState.SOURCE_CANDIDATE
+                   for item in result.terms)
+
+
 def test_fast_arq_source_format_is_exact_variant_not_synonym(tmp_path):
     install_chair(tmp_path, "126", "Fast ARQ R1-2601001")
     with MetadataRepository(tmp_path / "metadata.duckdb") as repository:
@@ -147,6 +176,22 @@ def test_related_term_stays_out_of_direct_inventory_and_company_is_metadata_auth
     assert not samsung.tdocs[0].explicit_meeting_outcome_reference
     assert any(association.query_term == candidate.literal_text
                for association in samsung.tdocs[0].associations)
+
+
+def test_direct_inventory_falls_back_to_exact_metadata_after_joined_chair_text(tmp_path):
+    install_chair(tmp_path, "126",
+                  "R1-2601001contention based PUSCHSamsung")
+    with MetadataRepository(tmp_path / "metadata.duckdb") as repository:
+        repository.upsert_tdoc(metadata("R1-2601001", "126",
+            "contention based PUSCH", "Samsung"))
+        service = TopicProfileService(repository, tmp_path)
+        _, profile = service.bootstrap_and_persist(request(
+            from_meeting="126", to_meeting="126",
+            accepted_source_terms=["contention based PUSCH"]))
+        inventory = service.inventory(profile)
+    samsung = next(item for item in inventory.companies if item.organization == "Samsung")
+    assert samsung.tdocs[0].chair_note_confirmed is True
+    assert samsung.tdocs[0].associations[0].association_basis == "metadata_title_relevance"
 
 
 def test_profile_reuse_extends_range_and_keeps_new_candidates_unaccepted(tmp_path):

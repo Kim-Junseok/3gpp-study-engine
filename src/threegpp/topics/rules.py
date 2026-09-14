@@ -6,11 +6,12 @@ import json
 import re
 
 TOPIC_BOOTSTRAP_SCHEMA_VERSION = "1"
-TOPIC_TERMINOLOGY_RULESET_VERSION = "lexical-source-terms-v1"
+TOPIC_TERMINOLOGY_RULESET_VERSION = "lexical-source-terms-v4"
 TOPIC_PROFILE_SCHEMA_VERSION = "1"
 TOPIC_INVENTORY_SCHEMA_VERSION = "1"
 DEFAULT_CANDIDATE_LIMIT = 40
 MAX_CANDIDATE_TOKENS = 4
+LOW_INFORMATION_CANDIDATE_ATOMS = {"less"}
 
 WORD = re.compile(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*")
 SEGMENT = re.compile(r"[^,;/|\n]+")
@@ -54,7 +55,26 @@ def seed_atoms(values: list[str]) -> set[str]:
     result = set()
     for value in values:
         result.update(part for part in normalized_term(value).split() if len(part) >= 3)
-    return result
+    informative = result - LOW_INFORMATION_CANDIDATE_ATOMS
+    return informative or result
+
+
+def strip_joined_organization_suffix(value: str, organizations: tuple[str, ...]) -> str:
+    """Remove an organization token joined to a preceding candidate word."""
+    spans = word_spans(value)
+    if not spans:
+        return value
+    word, _, end = spans[-1]
+    organization_heads = sorted({
+        parts[0][0]
+        for organization in organizations
+        if (parts := word_spans(organization))
+    }, key=lambda item: (-len(item), item.casefold(), item))
+    for organization in organization_heads:
+        if (len(word) > len(organization)
+                and word.casefold().endswith(organization.casefold())):
+            return value[:end - len(organization)] + value[end:]
+    return value
 
 
 def logical(value):
