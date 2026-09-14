@@ -29,3 +29,13 @@ For a new research topic, do not silently expand the user's wording through
 semantic similarity or model-generated synonyms. Use the topic bootstrap and
 source-terminology profile workflow. Keep observed candidate terms distinct
 from source terms that the researcher explicitly accepts.
+
+## Branch policy
+
+- `main` is the latest accepted and validated repository state.
+- Development occurs on `work/<version>-<topic>` branches created from `main`.
+- Do not modify `main` during implementation or live acceptance.
+- After acceptance, fast-forward `main` to the accepted work-branch HEAD.
+- Create an annotated version tag on the accepted SHA.
+- Do not create new `milestone/*` branches.
+- Existing `milestone/*` branches are legacy historical references.
