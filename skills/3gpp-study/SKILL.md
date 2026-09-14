@@ -5,6 +5,30 @@ description: Build provenance-aware 3GPP studies and evidence-grounded topic sum
 
 # 3GPP Study
 
+## V0.11 bounded topic corpus completion
+
+When the user explicitly asks to inspect contributions across an accepted
+topic profile, run `plan-topic-completion` first. Show the direct TDocs,
+companies, matched accepted terms, Discussion, Contribution inspection, and
+Meeting outcome states. Planning performs no contribution acquisition.
+
+Execute `complete-topic-corpus` only for the explicitly authorized TDocs or one
+deterministic batch. The default batch contains at most 20 TDocs and no
+operation may exceed 50. Do not continue to later batches without explicit
+scope. Use `CACHE` unless the user explicitly requests `PINNED`; preserve an
+existing `PINNED` body. Use `--offline` when acquisition is prohibited.
+
+After execution, rebuild the same profile inventory and report the resulting
+`TDoc content inspected` transitions. Keep Discussion and Meeting outcome
+unchanged unless their own authoritative sources changed. An item failure is
+an operational gap, not evidence about its technical contents.
+
+The corpus comes only from user seeds, exact formatting variants, and accepted
+source terms. Never include source candidates, related terms, or rejected
+terms without a profile revision. Corpus completion does not establish
+proposition equivalence, company stance, consensus, or meeting agreement. A
+single-TDoc content question continues to use V0.9 directly.
+
 ## V0.10 unknown-topic bootstrap
 
 For a new topic, first check whether the local runtime has an accepted topic

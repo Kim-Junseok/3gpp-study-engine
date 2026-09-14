@@ -1,5 +1,17 @@
 # Study vocabulary
 
+## Topic corpus completion
+
+Normal completion output continues to use **Topic**, **Companies / TDocs**,
+**Discussion**, **Contribution**, **Meeting outcome**, and **TDoc content
+inspected**. Operational plan state names belong in provenance or developer
+output.
+
+Say that a bounded set of direct-corpus TDocs was inspected. Do not call the
+topic semantically complete. `TDoc content inspected: Yes` means that current
+contribution extraction ran successfully, including a valid zero-evidence
+result. It does not mean the meeting agreed with the contribution.
+
 ## Topic and source terminology
 
 Use these terms for a new-topic study:

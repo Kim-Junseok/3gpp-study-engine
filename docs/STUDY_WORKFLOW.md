@@ -1,5 +1,37 @@
 # Study workflow
 
+## V0.11 bounded direct-corpus completion
+
+Use this sequence for a contribution-content question spanning an accepted
+topic corpus:
+
+```text
+new topic → V0.10 bootstrap/profile → direct inventory
+          → V0.11 bounded completion → future proposition analysis
+```
+
+Run `plan-topic-completion --topic-profile <id>` first. This read-only step
+shows already inspected, eligible, unavailable, unresolved, ambiguous,
+filtered, and deferred TDocs with their source associations. Its deterministic
+order is meeting chronology, source association order, then numeric TDoc ID.
+The default batch is 20 and the hard operation limit is 50.
+
+Run `complete-topic-corpus` only for an explicitly authorized list of `--tdoc`
+values or one `--batch`. The command executes no later batch automatically. It
+uses V0.9 for raw reuse/acquisition, retention, normalization, indexing,
+contribution evidence, targeted link status, and study-view refresh. Rebuild
+the profile inventory after partial completion; progress comes from actual
+per-TDoc state rather than a mutable counter.
+
+An item-local failure does not roll back successful independent items. A
+systemic exception stops the rest. Replan after a profile revision or direct
+source change. If a compatible planned TDoc was completed separately, reuse it
+without downloading it again.
+
+The corpus remains limited to selected meetings, prepared official sources,
+and accepted profile terms. Completing it does not establish technical
+completeness beyond that scope.
+
 ## New-topic first pass
 
 For a topic without an accepted terminology profile, run the offline bootstrap

@@ -255,6 +255,30 @@ def build_parser() -> argparse.ArgumentParser:
     update_profile.add_argument("--related", action="append", default=[])
     update_profile.add_argument("--reject", action="append", default=[])
     update_profile.add_argument("--provenance", action="store_true")
+    plan_completion = subparsers.add_parser(
+        "plan-topic-completion",
+        help="plan bounded completion of an accepted topic profile; never downloads")
+    plan_completion.add_argument("--topic-profile", required=True)
+    plan_completion.add_argument("--from-meeting")
+    plan_completion.add_argument("--to-meeting")
+    plan_completion.add_argument("--snapshot", action="append", default=[],
+                                 metavar="MEETING=SNAPSHOT_ID")
+    plan_completion.add_argument("--company", action="append", default=[])
+    plan_completion.add_argument("--meeting", action="append", default=[])
+    plan_completion.add_argument("--tdoc", action="append", default=[])
+    plan_completion.add_argument("--discussion-only", action="store_true")
+    plan_completion.add_argument("--limit", type=int, default=20)
+    plan_completion.add_argument("--retention", choices=["cache", "pinned"], default="cache")
+    plan_completion.add_argument("--provenance", action="store_true")
+    complete_topic = subparsers.add_parser(
+        "complete-topic-corpus",
+        help="explicitly execute one bounded selection from a saved topic plan")
+    complete_topic.add_argument("--plan", required=True)
+    selection = complete_topic.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--tdoc", action="append")
+    selection.add_argument("--batch", type=int)
+    complete_topic.add_argument("--offline", action="store_true")
+    complete_topic.add_argument("--provenance", action="store_true")
     return parser
 
 
@@ -337,6 +361,34 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"plan-topic-completion", "complete-topic-corpus"}:
+        from threegpp.topic_completion import (
+            TopicCorpusCompletionPlanRequest, TopicCorpusCompletionService,
+            render_topic_completion_plan, render_topic_completion_result,
+        )
+        from threegpp.documents.models import RetentionState
+        if args.command == "plan-topic-completion":
+            with MetadataRepository(args.db) as repository:
+                service = TopicCorpusCompletionService(repository, args.data_dir)
+                plan = service.plan(TopicCorpusCompletionPlanRequest(
+                    profile_id=args.topic_profile,
+                    from_meeting=args.from_meeting, to_meeting=args.to_meeting,
+                    chair_note_snapshots=_snapshot_arguments(args.snapshot),
+                    companies=args.company, meetings=args.meeting,
+                    tdoc_ids=args.tdoc, discussion_only=args.discussion_only,
+                    limit=args.limit, retention=RetentionState(args.retention)))
+                print(render_topic_completion_plan(
+                    plan, provenance=args.provenance), end="")
+            return 0
+        from threegpp.ingest import HTTPDownloader
+        with MetadataRepository(args.db) as repository, HTTPDownloader() as downloader:
+            result = TopicCorpusCompletionService(
+                repository, args.data_dir, downloader).execute(
+                    args.plan, tdoc_ids=args.tdoc, batch=args.batch,
+                    offline=args.offline)
+            print(render_topic_completion_result(
+                result, provenance=args.provenance), end="")
+        return 1 if result.systemic_failure or result.summary["failed"] else 0
     if args.command in {"bootstrap-topic", "show-topic-profile", "update-topic-profile"}:
         from threegpp.topics import (
             TopicBootstrapRequest, TopicProfileDecision, TopicProfileService,

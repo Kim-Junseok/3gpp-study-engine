@@ -1,5 +1,35 @@
 # Architecture
 
+## V0.11 bounded completion layer
+
+`threegpp.topic_completion` is a narrow orchestration layer:
+
+```text
+accepted TopicTerminologyProfile
+  → V0.10 direct inventory
+  → deterministic bounded plan
+  → explicit TDoc or batch selection
+  → V0.9 TDocEvidenceCompletionService
+  → refreshed V0.10 inventory
+```
+
+Planning reads metadata, receipts, index state, SemanticEvidence state, and
+profile associations. It performs no acquisition. Execution calls the existing
+single-TDoc completion service and therefore adds no downloader, normalizer,
+indexer, or evidence extractor. An item-local V0.9 failure is recorded and the
+next independent item proceeds. An unexpected repository or schema exception
+stops the remaining selection.
+
+Plans live under `data/derived/topic-completion/<wg>/<plan-id>/`. Their scope
+identity covers the immutable profile, direct inventory sources, associations,
+metadata provenance, filters, retention, bounds, completion-state identities,
+and versioned rules. A new profile revision invalidates an old plan. A
+compatible TDoc completed after planning is reused without another download.
+
+Only `USER_SEED`, `EXACT_VARIANT`, and `ACCEPTED_SOURCE_TERM` inventory entries
+reach this layer. Completion does not change Chair Note Discussion or meeting
+outcome authority and does not compare contribution propositions.
+
 ## V0.10 topic terminology layer
 
 `threegpp.topics` adds a retrieval-configuration layer above prepared official

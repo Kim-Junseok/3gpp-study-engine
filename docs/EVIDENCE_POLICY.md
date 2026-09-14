@@ -1,5 +1,22 @@
 # Evidence policy
 
+## V0.11 corpus-completion boundary
+
+Corpus completion is an operational statement that eligible direct-profile
+TDocs were processed under current local rules. It does not establish
+proposition equivalence or consensus. An inspected contribution remains a
+company-scoped contribution and does not become a meeting agreement.
+
+Planning may preserve a metadata-title-only TDoc while reporting that it was
+not observed in the selected Chair Note. Completing its body cannot change
+that Discussion state. Contribution content also cannot manufacture an
+explicit meeting-outcome reference.
+
+The completion corpus uses only user seeds, formatting variants, and source
+terms explicitly accepted in the profile. Source candidates, related terms,
+and rejected terms require a profile revision before they can affect direct
+retrieval.
+
 ## V0.10 terminology boundary
 
 A topic terminology profile changes retrieval configuration only. It does not

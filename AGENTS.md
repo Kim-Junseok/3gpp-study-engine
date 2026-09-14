@@ -30,6 +30,11 @@ semantic similarity or model-generated synonyms. Use the topic bootstrap and
 source-terminology profile workflow. Keep observed candidate terms distinct
 from source terms that the researcher explicitly accepts.
 
+Topic bootstrap, profile, and inventory operations remain read-only for
+contribution bodies. Bounded topic corpus completion requires an accepted
+topic profile and explicit acquisition authorization. Do not expand
+terminology during completion or execute an unbounded topic acquisition.
+
 ## Branch policy
 
 - `main` is the latest accepted and validated repository state.

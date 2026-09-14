@@ -1,5 +1,24 @@
 # Data model
 
+## V0.11 topic corpus completion
+
+`TopicCorpusCompletionPlanRequest` names one accepted profile, an optional
+meeting range and explicit company/meeting/TDoc/Discussion filters, `CACHE` or
+`PINNED` retention, and a bound from 1 through 50. The default is 20.
+
+`TopicCorpusCompletionPlan` preserves the profile and inventory identities,
+source identities, immutable child-profile revision set, direct-corpus scope
+checksum, ordered items, deterministic batches, counts, limitations, and
+independent schema/ruleset versions. Each item retains its topic associations,
+official metadata, three research-facing axes, local pipeline states,
+eligibility, required stages, reason, and a checksum of its completion state.
+
+`TopicCorpusCompletionResult` contains one existing
+`TDocEvidenceCompletionResult` per processed TDoc. It reports completed,
+reused, failed, not-run, ineligible, and deferred counts independently and
+records the refreshed V0.10 inventory identity. Plan and result JSON files are
+compact derived state; they do not copy raw or normalized contribution text.
+
 ## V0.10 terminology profiles
 
 `TopicBootstrapRequest` defines a working group, bounded meeting range, user

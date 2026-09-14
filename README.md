@@ -13,6 +13,35 @@ Use `show-tdoc-study --wg <WG> --tdoc <ID>` for this view. It reports whether a 
 
 V0.8 supplies the deterministic document/reference-level links beneath this view. It connects contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
 
+## V0.11 bounded topic corpus completion
+
+The bounded workflow turns a reviewed profile into an inspectable acquisition
+plan before it processes any contribution body:
+
+```text
+Topic profile → TDoc/company inventory → completion plan
+              → explicit bounded acquisition → updated inspected-state inventory
+```
+
+Planning preserves every direct-corpus TDoc and the profile term, source
+locator, meeting, organization, title, Discussion, Contribution, and Meeting
+outcome states that admitted it. The default operation selects at most 20
+eligible TDocs. Deterministic later batches remain available, and one operation
+can never exceed the repository limit of 50.
+
+```bash
+python -m threegpp.cli plan-topic-completion \
+  --topic-profile <profile-id>
+python -m threegpp.cli complete-topic-corpus \
+  --plan <plan-id> --batch 1
+```
+
+The first command performs zero contribution-body downloads. The second
+command is the explicit acquisition action and reuses V0.9 for each selected
+TDoc. `--offline` prohibits downloads; `--retention pinned` belongs on the plan
+and applies only to its explicitly executed subset. Profile candidates,
+related terms, and rejected terms never enter the completion corpus.
+
 ## V0.10 new-topic terminology bootstrap
 
 The new-topic workflow discovers wording that prepared official sources
@@ -96,7 +125,7 @@ Range coverage reuses V0.6 once per meeting. Missing sources and ambiguous snaps
 
 ## Milestone status
 
-**Current development milestone: V0.10 topic terminology bootstrap.**
+**Current development milestone: V0.11 bounded topic corpus completion.**
 
 ```text
 3GPP meeting
