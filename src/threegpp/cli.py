@@ -279,6 +279,30 @@ def build_parser() -> argparse.ArgumentParser:
     selection.add_argument("--batch", type=int)
     complete_topic.add_argument("--offline", action="store_true")
     complete_topic.add_argument("--provenance", action="store_true")
+    build_propositions = subparsers.add_parser(
+        "build-proposition-corpus",
+        help="build source-bound proposition candidates from local contribution evidence")
+    build_propositions.add_argument("--topic-profile", required=True)
+    build_propositions.add_argument("--from-meeting")
+    build_propositions.add_argument("--to-meeting")
+    build_propositions.add_argument("--snapshot", action="append", default=[],
+                                    metavar="MEETING=SNAPSHOT_ID")
+    build_propositions.add_argument("--limit", type=int, default=100)
+    build_propositions.add_argument("--provenance", action="store_true")
+    show_propositions = subparsers.add_parser(
+        "show-proposition-corpus", help="show a persisted local proposition corpus")
+    show_propositions.add_argument("--corpus", required=True)
+    show_propositions.add_argument("--provenance", action="store_true")
+    review_proposition = subparsers.add_parser(
+        "review-proposition", help="record an explicit proposition candidate review")
+    review_proposition.add_argument("--corpus", required=True)
+    review_proposition.add_argument("--candidate", required=True)
+    review_proposition.add_argument("--decision", required=True, choices=[
+        "accept", "defer", "exclude_non_proposition", "replace_with_exact_spans"])
+    review_proposition.add_argument("--span", action="append", default=[], metavar="START:END",
+                                    help="exact source-unit span for replacement; may be repeated")
+    review_proposition.add_argument("--note")
+    review_proposition.add_argument("--provenance", action="store_true")
     return parser
 
 
@@ -361,6 +385,35 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"build-proposition-corpus", "show-proposition-corpus", "review-proposition"}:
+        from threegpp.propositions import (PropositionCorpusBuildRequest,
+            PropositionCorpusService, render_proposition_corpus)
+        with MetadataRepository(args.db) as repository:
+            service = PropositionCorpusService(repository, args.data_dir)
+            if args.command == "build-proposition-corpus":
+                corpus = service.build(PropositionCorpusBuildRequest(
+                    profile_id=args.topic_profile, from_meeting=args.from_meeting,
+                    to_meeting=args.to_meeting,
+                    chair_note_snapshots=_snapshot_arguments(args.snapshot), limit=args.limit))
+            elif args.command == "show-proposition-corpus":
+                corpus = service.load(args.corpus)
+            else:
+                loaded = service.load(args.corpus)
+                unit_by_candidate = {c.candidate_id: next(u for u in loaded.source_units
+                    if u.source_unit_id == c.source_unit_id) for c in loaded.candidates}
+                if args.candidate not in unit_by_candidate:
+                    raise ValueError("candidate is not in this corpus")
+                source = unit_by_candidate[args.candidate].exact_text
+                spans = []
+                for value in args.span:
+                    try: start, end = map(int, value.split(":", 1))
+                    except Exception as exc: raise ValueError("--span must use START:END") from exc
+                    spans.append({"char_start": start, "char_end": end,
+                                  "exact_text": source[start:end]})
+                corpus = service.review(args.corpus, args.candidate, args.decision,
+                    spans=spans, researcher_note=args.note)
+            print(render_proposition_corpus(corpus, provenance=args.provenance), end="")
+        return 0
     if args.command in {"plan-topic-completion", "complete-topic-corpus"}:
         from threegpp.topic_completion import (
             TopicCorpusCompletionPlanRequest, TopicCorpusCompletionService,

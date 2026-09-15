@@ -153,6 +153,19 @@ stored organizations include that company. Only describe “RAN agreed X” for
 paraphrase, infer support/opposition or company positions, cluster proposals, or
 synthesize cross-meeting trends.
 
+## V0.12 proposition preparation
+
+For proposition-level preparation, use `build-proposition-corpus`, then inspect
+literal candidates with `show-proposition-corpus --provenance`. Do not
+propositionize meeting evidence. Keep candidates unreviewed until the researcher
+explicitly accepts, defers, excludes, or selects exact source spans.
+
+Use `review-proposition` for the decision. Exact-span replacement may select
+source wording but cannot add a paraphrase. Preserve qualifiers, evidence kind,
+organization attribution, EvidenceRefs, and separate spans. Do not merge
+duplicates or infer equivalence, stance, polarity, consensus, meeting adoption,
+or evolution.
+
 ## V0.5 evidence-grounded topic answers
 
 Run `threegpp study-topic --query <query>` over already-local state. Structure the answer as: Topic; Relevant contribution evidence; Meeting-level evidence by authority meeting; What the meeting agreed to do; Relevant qualifications; What is not established; Coverage. Every technical statement must identify TDoc, member, kind/scope, authority meeting, EvidenceRef, and literal support.

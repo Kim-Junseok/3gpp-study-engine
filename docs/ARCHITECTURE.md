@@ -233,6 +233,21 @@ Official raw evidence -> Normalized blocks -> EvidenceRef -> SemanticEvidence
 
 The core reads current normalized, indexed, and semantic derived state and never persists narrative synthesis. Timelines aggregate meeting outcomes by **authority meeting**, while retaining the metadata **discovery meeting**. Contribution evidence remains grouped only by stored source organization and is never promoted to a meeting outcome.
 
+## V0.12 proposition preparation layer
+
+```text
+reviewed TopicProfile → direct inventory → inspected contribution corpus
+→ contribution SemanticEvidence → source units → atomic candidates
+→ explicit researcher review → accepted proposition corpus
+```
+
+`threegpp.propositions` reads current local evidence and performs no acquisition.
+It preserves literal source wording and provenance, uses conservative structural
+segmentation, and accepts only unchanged candidates or exact source-unit spans.
+Meeting-scoped evidence cannot enter this path. Artifacts below
+`data/derived/propositions/` become stale when their profile, inventory,
+normalization, SemanticEvidence, or rules change.
+
 ## V0.6 Chair Note coverage layer
 
 ```text

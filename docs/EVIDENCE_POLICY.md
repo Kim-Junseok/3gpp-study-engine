@@ -134,6 +134,20 @@ Company proposal ≠ meeting agreement, and company conclusion ≠ meeting concl
 - Similar wording is not proposal linkage. Only literal references are links.
 - Absence of explicit adoption evidence does not mean rejection.
 
+## V0.12 proposition preparation authority
+
+A proposition source unit must originate from current
+`SemanticEvidence + CONTRIBUTION`. Meeting evidence remains a separate authority
+channel. An atomic candidate is a source-bound review unit. Only explicit review
+creates an accepted proposition, and exact-span replacement cannot introduce or
+paraphrase words.
+
+Repeated wording remains repeated evidence. An optional exact surface-duplicate
+group within one TDoc and evidence kind does not collapse records. Similar wording
+does not establish equivalence, stance, support, opposition, consensus, evolution,
+or a meeting outcome. Missing evidence and unreviewed candidates are unknown
+states, not negative evidence.
+
 ## V0.6 Chair Note authority
 
 The official TDoc List defines the meeting document universe and official metadata. A selected Chair Note provides positive evidence only that it explicitly associates a referenced TDoc with the bounded recorded discussion context. Contribution bodies remain authoritative for company statements, while accepted reports/minutes remain authoritative for meeting agreements and decisions.

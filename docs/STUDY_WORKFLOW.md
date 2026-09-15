@@ -197,6 +197,24 @@ Context examines at most three immediately following blocks in the same member a
 
 Coverage counts are scoped to working-group and discovery-meeting filters, before topic and evidence-level filters. `documents_indexable` counts stored INDEXED states; `meeting_reports_available` counts role-classified extraction states. These are local processing diagnostics, not a complete meeting inventory. Semantic candidate scanning is currently bounded to 5000 fresh records; lexical retrieval has its own result limit. Results are capped per contribution organization and per authority meeting, and semantic truncation is reported. An unresolved-authority group is separately bounded. These limits can omit relevant material.
 
+## Proposition preparation
+
+After bounded completion and SemanticEvidence extraction, build candidates
+without fetching bodies:
+
+```bash
+python -m threegpp.cli build-proposition-corpus --topic-profile <profile-id>
+python -m threegpp.cli show-proposition-corpus --corpus <corpus-id> --provenance
+python -m threegpp.cli review-proposition --corpus <corpus-id> \
+  --candidate <candidate-id> --decision accept
+```
+
+Replacement uses one or more `--span START:END` source-unit ranges. The CLI
+copies the literal slices and accepts no replacement prose. Review qualifiers,
+kind, organization metadata, and EvidenceRefs before accepting. A stale profile,
+inventory, normalization, evidence artifact, or ruleset requires rebuilding.
+Reviews for missing candidate IDs do not transfer silently.
+
 ## Chair Note guided corpus expansion
 
 Use this order for a meeting/topic whose contribution bodies are incomplete:

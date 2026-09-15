@@ -42,6 +42,18 @@ TDoc. `--offline` prohibits downloads; `--retention pinned` belongs on the plan
 and applies only to its explicitly executed subset. Profile candidates,
 related terms, and rejected terms never enter the completion corpus.
 
+## V0.12 provenance-bound proposition preparation
+
+V0.12 derives literal comparison units from contribution-scoped
+`SemanticEvidence` in a reviewed topic corpus. `build-proposition-corpus`
+preserves evidence kind, source organizations, exact source text and spans,
+members, EvidenceRefs, and normalization and evidence checksums. It applies only
+structural segmentation and retains a whole source unit when boundaries are
+unclear. Candidates require explicit review. Exact-span replacement cannot add
+or paraphrase words. The deterministic derived corpus is ignored by Git.
+V0.12 does not compare, merge, or score propositions and does not infer
+equivalence, stance, consensus, or meeting outcomes.
+
 ## V0.10 new-topic terminology bootstrap
 
 The new-topic workflow discovers wording that prepared official sources

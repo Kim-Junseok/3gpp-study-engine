@@ -190,6 +190,20 @@ Local acceptance revisions use topic schema `2`, authority rules `meeting-author
 
 On-demand study identity includes the logical bundle (excluding extraction timestamps), request, independent rule versions, and scoped semantic-state metadata/normalization identities and checksums. No topic cache or persistent study table exists. Changes to source content can change study identity even when V0.4 evidence IDs remain stable. Literal references to unrelated TDocs do not remove unresolved contribution relationships.
 
+## V0.12 proposition preparation models
+
+`PropositionSourceUnit` binds one contribution `SemanticEvidence` item to its
+literal statement, kind, organizations, member names, EvidenceRefs, and upstream
+checksums. `AtomicPropositionCandidate` adds exact source-unit spans, a structural
+segmentation reason, and an initial `UNREVIEWED` state.
+
+`PropositionReview` records `ACCEPT`, `DEFER`, `EXCLUDE_NON_PROPOSITION`, or
+`REPLACE_WITH_EXACT_SPANS`. Researcher notes carry no proposition authority.
+`AcceptedProposition` retains the complete candidate, source-unit, review,
+EvidenceRef, and exact-span lineage. `TopicPropositionCorpus` stores a
+deterministic manifest and gzip JSONL artifacts. Corpus identity includes the
+profile, inventory, current evidence inputs, segmentation ruleset, and schemas.
+
 ## V0.6 Chair Note and coverage models
 
 `ChairNoteArtifact` preserves working group, meeting, official URL/filename, exact source directory, deterministic artifact ID, discovery time, and rule version. `ChairNoteSnapshot` adds deterministic snapshot ID, raw label, conservative role, raw retrieval/checksum, parser and normalization identity, normalized checksum/path, extraction status, block count, and literal-reference count. Multiple snapshot receipts and outputs coexist under their snapshot IDs. `EOM` is distinct from `EXPLICIT_FINAL`; conflicting or missing labels are `UNKNOWN`.

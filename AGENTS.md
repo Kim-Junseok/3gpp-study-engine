@@ -35,6 +35,13 @@ contribution bodies. Bounded topic corpus completion requires an accepted
 topic profile and explicit acquisition authorization. Do not expand
 terminology during completion or execute an unbounded topic acquisition.
 
+Proposition preparation operates only on current contribution-scoped
+SemanticEvidence from a reviewed direct topic corpus. Preserve literal text,
+qualifiers, spans, evidence kind, organizations, and EvidenceRefs. Candidates
+remain unreviewed until an explicit researcher decision. Exact-span replacement
+cannot introduce free text. Do not infer or score equivalence, stance, polarity,
+consensus, meeting outcomes, or proposition evolution.
+
 ## Branch policy
 
 - `main` is the latest accepted and validated repository state.
