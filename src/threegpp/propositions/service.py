@@ -20,7 +20,7 @@ from .models import (
     PropositionTDocAccounting,
     PropositionSourceUnit, TopicPropositionCorpus,
 )
-from .rules import digest, segment, surface
+from .rules import digest, option_context_source_units, segment, surface
 
 
 LIMITATIONS = [
@@ -110,12 +110,14 @@ class PropositionCorpusService:
                     "surface_normalized":first.surface_normalized})
                 for value in values: value.surface_duplicate_group_id = group_id
         candidates = []
+        source_contexts = option_context_source_units(units)
         for unit in units:
             staged = segment(unit.exact_text)
             ids = []
             for ordinal, (span, reason, parent) in enumerate(staged, 1):
                 logical = {"source_unit_id": unit.source_unit_id, "ordinal": ordinal,
                            "span": span.model_dump(mode="json"), "reason": reason.value,
+                           "context_source_unit_id": source_contexts.get(unit.source_unit_id),
                            "ruleset": PROPOSITION_SEGMENTATION_RULESET_VERSION}
                 checksum = digest(logical); cid = "proposition-candidate-" + checksum
                 ids.append(cid)
@@ -126,7 +128,9 @@ class PropositionCorpusService:
                     meeting=unit.meeting, tdoc_id=unit.tdoc_id,
                     source_organizations=unit.source_organizations,
                     evidence_kind=unit.evidence_kind, segmentation_reason=reason,
-                    context_candidate_id=(ids[parent] if parent is not None else None)))
+                    context_candidate_id=(ids[parent] if parent is not None else None),
+                    context_source_unit_id=(unit.source_unit_id if parent is not None
+                        else source_contexts.get(unit.source_unit_id))))
         source_checksum = digest([u.model_dump(mode="json") for u in units])
         candidate_checksum = digest([c.model_dump(mode="json") for c in candidates])
         unit_counts, candidate_counts = {}, {}

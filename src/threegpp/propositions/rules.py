@@ -10,6 +10,9 @@ from .models import ExactSourceSpan, SegmentationReason
 
 _LIST = re.compile(r"(?m)^(?P<indent>\s*)(?P<mark>[-•*]|\d+[.)]|Option\s+\d+\s*[:.)])\s+")
 _SENTENCE = re.compile(r"(?<=[.!?])(?=\s+(?:[\"'“‘(]*[A-Z0-9]))")
+_OPTION_CHILD = re.compile(r"^\s*Option\s+\d+\s*[:.)]", re.IGNORECASE)
+_OPTION_PARENT = re.compile(r"\b(?:following\s+)?options?\b[^\n.?!]*:\s*$", re.IGNORECASE)
+_BLOCK_ID = re.compile(r"^b(\d+)$")
 
 
 def canonical(value) -> bytes:
@@ -25,6 +28,33 @@ def digest(value) -> str:
 
 def surface(text: str) -> str:
     return " ".join(unicodedata.normalize("NFC", text).split()).casefold()
+
+
+def option_context_source_units(source_units):
+    """Link consecutive explicit option units to an adjacent literal introduction."""
+    contexts = {}
+    active_parent = None
+    previous = None
+    for unit in source_units:
+        first_ref = min(unit.evidence_refs, key=lambda value: value.sequence).evidence_ref
+        same_context = previous is not None and (
+            unit.tdoc_id == previous.tdoc_id
+            and first_ref.member == previous.member
+            and first_ref.heading_path == previous.heading_path
+            and _adjacent(previous.block_id, first_ref.block_id)
+        )
+        if _OPTION_CHILD.match(unit.exact_text) and same_context and active_parent is not None:
+            contexts[unit.source_unit_id] = active_parent
+        else:
+            active_parent = (unit.source_unit_id
+                if _OPTION_PARENT.search(unit.exact_text) else None)
+        previous = first_ref
+    return contexts
+
+
+def _adjacent(left: str, right: str) -> bool:
+    a, b = _BLOCK_ID.fullmatch(left), _BLOCK_ID.fullmatch(right)
+    return bool(a and b and int(b.group(1)) == int(a.group(1)) + 1)
 
 
 def segment(text: str):

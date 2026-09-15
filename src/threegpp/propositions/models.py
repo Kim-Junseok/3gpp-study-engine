@@ -9,7 +9,7 @@ from threegpp.models import EvidenceKind, EvidenceScope, EvidenceSpan, WorkingGr
 
 
 PROPOSITION_CORPUS_SCHEMA_VERSION = "1"
-PROPOSITION_SEGMENTATION_RULESET_VERSION = "proposition-segmentation-v1"
+PROPOSITION_SEGMENTATION_RULESET_VERSION = "proposition-segmentation-v2"
 PROPOSITION_REVIEW_SCHEMA_VERSION = "1"
 PROPOSITION_SOURCE_UNIT_SCHEMA_VERSION = "1"
 
@@ -96,6 +96,7 @@ class AtomicPropositionCandidate(Model):
     segmentation_reason: SegmentationReason
     segmentation_rule_version: str = PROPOSITION_SEGMENTATION_RULESET_VERSION
     context_candidate_id: str | None = None
+    context_source_unit_id: str | None = None
     review_state: CandidateReviewState = CandidateReviewState.UNREVIEWED
 
 

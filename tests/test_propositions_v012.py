@@ -16,9 +16,9 @@ from threegpp.propositions.models import SegmentationReason
 from threegpp.propositions.rules import segment, surface
 
 
-def _span(text="Proposal: Study X."):
+def _span(text="Proposal: Study X.", block_id="b1"):
     return EvidenceSpan(evidence_ref=EvidenceRef(tdoc_id="R1-2600001",
-        working_group="RAN1", meeting="126", member="a.docx", block_id="b1",
+        working_group="RAN1", meeting="126", member="a.docx", block_id=block_id,
         block_type="paragraph"), sequence=0, char_start=0, char_end=len(text))
 
 
@@ -35,6 +35,12 @@ def _evidence(text="Proposal: Study X.", *, eid="ev-1", scope=EvidenceScope.CONT
         matched_cue="Proposal", rule_id="fixture", rule_version="1",
         extracted_at=datetime.now(timezone.utc), normalization_identity={"id":"norm-1"},
         evidence_schema_version="1")
+
+
+def _evidence_at(text, eid, block_id, kind=EvidenceKind.PROPOSAL):
+    value=_evidence(text,eid=eid,kind=kind)
+    value.evidence_refs=[_span(text,block_id)]
+    return value
 
 
 class Profiles:
@@ -106,6 +112,19 @@ def test_list_children_keep_explicit_parent_context(tmp_path):
     candidates=service.build(_request(),persist=False).candidates
     assert candidates[1].context_candidate_id == candidates[0].candidate_id
     assert candidates[2].context_candidate_id == candidates[0].candidate_id
+    assert candidates[1].context_source_unit_id == candidates[0].source_unit_id
+
+
+def test_adjacent_option_units_reference_parent_source_unit(tmp_path):
+    evidence=[_evidence_at("Proposal: The following options can be considered:","ev-parent","b000010"),
+              _evidence_at("Option 1: exact first option.","ev-option-1","b000011",EvidenceKind.CONCLUSION),
+              _evidence_at("Option 2: exact second option.","ev-option-2","b000012",EvidenceKind.CONCLUSION)]
+    service,_=_service(tmp_path,evidence)
+    corpus=service.build(_request(),persist=False)
+    parent=corpus.source_units[0].source_unit_id
+    assert corpus.candidates[1].context_source_unit_id == parent
+    assert corpus.candidates[2].context_source_unit_id == parent
+    assert corpus.candidates[1].exact_text == "Option 1: exact first option."
 
 
 def test_ambiguous_compound_falls_back_whole():

@@ -244,6 +244,8 @@ reviewed TopicProfile → direct inventory → inspected contribution corpus
 `threegpp.propositions` reads current local evidence and performs no acquisition.
 It preserves literal source wording and provenance, uses conservative structural
 segmentation, and accepts only unchanged candidates or exact source-unit spans.
+An explicit option child references its adjacent source introduction instead of
+copying that context into the candidate text.
 Meeting-scoped evidence cannot enter this path. Artifacts below
 `data/derived/propositions/` become stale when their profile, inventory,
 normalization, SemanticEvidence, or rules change.

@@ -23,6 +23,9 @@ def render_proposition_corpus(corpus, *, provenance=False):
         if provenance:
             lines.append(f"  source={candidate.source_unit_id} spans=" + ",".join(
                 f"{s.char_start}:{s.char_end}" for s in candidate.source_spans))
+            if candidate.context_source_unit_id or candidate.context_candidate_id:
+                lines.append("  context=" + ", ".join(value for value in (
+                    candidate.context_source_unit_id, candidate.context_candidate_id) if value))
     if corpus.accepted_propositions:
         lines += ["", "Accepted propositions"]
         for item in corpus.accepted_propositions:

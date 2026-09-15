@@ -214,6 +214,8 @@ copies the literal slices and accepts no replacement prose. Review qualifiers,
 kind, organization metadata, and EvidenceRefs before accepting. A stale profile,
 inventory, normalization, evidence artifact, or ruleset requires rebuilding.
 Reviews for missing candidate IDs do not transfer silently.
+For an explicit option child, inspect `context_source_unit_id` before reviewing;
+the parent source remains separate from the candidate text.
 
 ## Chair Note guided corpus expansion
 

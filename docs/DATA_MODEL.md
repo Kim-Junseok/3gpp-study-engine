@@ -196,6 +196,8 @@ On-demand study identity includes the logical bundle (excluding extraction times
 literal statement, kind, organizations, member names, EvidenceRefs, and upstream
 checksums. `AtomicPropositionCandidate` adds exact source-unit spans, a structural
 segmentation reason, and an initial `UNREVIEWED` state.
+`context_source_unit_id` records a structurally adjacent option introduction
+when the child text depends on it; it does not add context to proposition text.
 
 `PropositionReview` records `ACCEPT`, `DEFER`, `EXCLUDE_NON_PROPOSITION`, or
 `REPLACE_WITH_EXACT_SPANS`. Researcher notes carry no proposition authority.

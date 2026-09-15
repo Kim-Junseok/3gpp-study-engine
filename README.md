@@ -49,7 +49,8 @@ V0.12 derives literal comparison units from contribution-scoped
 preserves evidence kind, source organizations, exact source text and spans,
 members, EvidenceRefs, and normalization and evidence checksums. It applies only
 structural segmentation and retains a whole source unit when boundaries are
-unclear. Candidates require explicit review. Exact-span replacement cannot add
+unclear. Consecutive explicit option units may reference an adjacent literal
+option introduction as source context. Candidates require explicit review. Exact-span replacement cannot add
 or paraphrase words. The deterministic derived corpus is ignored by Git.
 V0.12 does not compare, merge, or score propositions and does not infer
 equivalence, stance, consensus, or meeting outcomes.
