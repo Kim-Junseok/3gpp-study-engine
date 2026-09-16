@@ -55,6 +55,29 @@ or paraphrase words. The deterministic derived corpus is ignored by Git.
 V0.12 does not compare, merge, or score propositions and does not infer
 equivalence, stance, consensus, or meeting outcomes.
 
+## V0.13 explicit cross-organization proposition relations
+
+V0.13 forms deterministic candidate pairs only from accepted propositions whose
+stored organization sets are non-empty and disjoint. Every pair starts
+`UNREVIEWED`. A researcher may record `EQUIVALENT`, `OVERLAPPING`, `DISTINCT`,
+`CONFLICTING`, `NOT_COMPARABLE`, or `DEFER` with an exact basis from each side.
+
+```bash
+python -m threegpp.cli build-proposition-relations \
+  --proposition-corpus <v0.12-corpus-id>
+python -m threegpp.cli show-proposition-relations \
+  --corpus <relation-corpus-id> --provenance
+python -m threegpp.cli review-proposition-relation \
+  --corpus <relation-corpus-id> --pair <pair-id> --decision DISTINCT
+```
+
+The commands use local accepted propositions and perform no official-source
+acquisition. Relations carry `RESEARCHER_ANALYSIS` authority. They do not state
+company stance, consensus, meeting adoption, or temporal evolution. Pair absence
+and an unreviewed pair are unknown states. Runtime artifacts under
+`data/derived/proposition-relations/` are deterministic, stale-safe, and ignored
+by Git.
+
 ## V0.10 new-topic terminology bootstrap
 
 The new-topic workflow discovers wording that prepared official sources

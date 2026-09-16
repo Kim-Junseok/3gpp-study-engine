@@ -206,6 +206,25 @@ EvidenceRef, and exact-span lineage. `TopicPropositionCorpus` stores a
 deterministic manifest and gzip JSONL artifacts. Corpus identity includes the
 profile, inventory, current evidence inputs, segmentation ruleset, and schemas.
 
+## V0.13 proposition relation models
+
+`PropositionPairCandidate` canonically orders two accepted proposition IDs. Both
+propositions must have non-empty, disjoint stored organization sets. Its initial
+state is `UNREVIEWED`; identical text has no special meaning.
+
+`PropositionRelationReview` records one symmetric decision and exact bilateral
+`RelationBasisSpan` values. The vocabulary is `EQUIVALENT`, `OVERLAPPING`,
+`DISTINCT`, `CONFLICTING`, `NOT_COMPARABLE`, and `DEFER`. Explicit updates form a
+review history through `supersedes_review_id`. Rationale belongs to review
+provenance and does not change the logical accepted-relation identity.
+
+`AcceptedPropositionRelation` exists for current non-`DEFER` decisions. It binds
+both accepted proposition IDs, source review IDs, EvidenceRefs, exact bases, and
+`RESEARCHER_ANALYSIS` authority. This authority is separate from EvidenceScope.
+`PropositionRelationCorpusManifest` binds artifacts to the current V0.12 corpus,
+accepted proposition checksum, profile, inventory, and
+`proposition-relations-v1` pair rules.
+
 ## V0.6 Chair Note and coverage models
 
 `ChairNoteArtifact` preserves working group, meeting, official URL/filename, exact source directory, deterministic artifact ID, discovery time, and rule version. `ChairNoteSnapshot` adds deterministic snapshot ID, raw label, conservative role, raw retrieval/checksum, parser and normalization identity, normalized checksum/path, extraction status, block count, and literal-reference count. Multiple snapshot receipts and outputs coexist under their snapshot IDs. `EOM` is distinct from `EXPLICIT_FINAL`; conflicting or missing labels are `UNKNOWN`.

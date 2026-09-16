@@ -151,3 +151,19 @@ keeps the value `No`.
 The document model defines `CACHE` and `PINNED` retention. V0.9 retains a newly
 requested body as `CACHE` and uses `PINNED` only on explicit request. It does not
 automatically delete or prune either state.
+
+## Researcher-reviewed proposition relations
+
+When a researcher explicitly reviews two accepted propositions, introduce the
+result as a researcher annotation:
+
+```text
+Researcher-reviewed relation: OVERLAPPING
+```
+
+Always show the left and right proposition, their organizations, exact bilateral
+bases, TDoc provenance, and review identity. Do not rewrite a relation as a
+company position, meeting decision, adoption, consensus, or historical trend.
+`UNREVIEWED`, `DEFER`, and pair absence mean that no accepted relation is
+available in this corpus. They do not mean disagreement, rejection, or lack of
+technical relationship.

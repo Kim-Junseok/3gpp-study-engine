@@ -166,6 +166,20 @@ organization attribution, EvidenceRefs, and separate spans. Do not merge
 duplicates or infer equivalence, stance, polarity, consensus, meeting adoption,
 or evolution.
 
+## V0.13 explicit proposition relations
+
+Use `build-proposition-relations` only with a current reviewed V0.12 proposition
+corpus. Inspect bounded batches with `show-proposition-relations`. Never assign a
+relation automatically. Use `review-proposition-relation` only for a decision
+the researcher explicitly provides, and preserve exact bilateral bases.
+
+Describe accepted values as researcher-reviewed relations. Cite both proposition
+IDs, organizations, TDocs, EvidenceRefs, bases, and review identity. Never turn
+`EQUIVALENT`, `OVERLAPPING`, `DISTINCT`, `CONFLICTING`, or `NOT_COMPARABLE` into
+company stance, consensus, meeting adoption, rejection, or proposition
+evolution. Treat `DEFER`, `UNREVIEWED`, and pair absence as unknown. These
+commands perform no official-source acquisition.
+
 ## V0.5 evidence-grounded topic answers
 
 Run `threegpp study-topic --query <query>` over already-local state. Structure the answer as: Topic; Relevant contribution evidence; Meeting-level evidence by authority meeting; What the meeting agreed to do; Relevant qualifications; What is not established; Coverage. Every technical statement must identify TDoc, member, kind/scope, authority meeting, EvidenceRef, and literal support.

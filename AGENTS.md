@@ -42,6 +42,13 @@ remain unreviewed until an explicit researcher decision. Exact-span replacement
 cannot introduce free text. Do not infer or score equivalence, stance, polarity,
 consensus, meeting outcomes, or proposition evolution.
 
+Proposition relations operate only on accepted propositions from a current
+V0.12 corpus. A relation is an explicit symmetric researcher annotation with
+exact bilateral source bases. It is not SemanticEvidence, company stance,
+consensus, a meeting outcome, adoption, or proposition evolution. Never assign
+a relation from wording, lexical overlap, or semantic similarity. An unreviewed
+or absent relation is unknown, not negative evidence.
+
 ## Branch policy
 
 - `main` is the latest accepted and validated repository state.

@@ -13,6 +13,7 @@ from threegpp.documents import DocumentService, FetchPlanner
 from threegpp.documents.models import TDocFetchPlan
 from threegpp.ingest import HTTPDownloader, ManifestStore, MeetingIngestor
 from threegpp.models import (
+    EvidenceKind,
     SnapshotRole,
     StudyRequest,
     TDocQuery,
@@ -303,6 +304,42 @@ def build_parser() -> argparse.ArgumentParser:
                                     help="exact source-unit span for replacement; may be repeated")
     review_proposition.add_argument("--note")
     review_proposition.add_argument("--provenance", action="store_true")
+    build_relations = subparsers.add_parser(
+        "build-proposition-relations",
+        help="build deterministic cross-organization pairs from accepted propositions")
+    build_relations.add_argument("--proposition-corpus", required=True)
+    build_relations.add_argument("--organization", action="append", default=[])
+    build_relations.add_argument("--left-organization", action="append", default=[])
+    build_relations.add_argument("--right-organization", action="append", default=[])
+    build_relations.add_argument("--tdoc", action="append", default=[])
+    build_relations.add_argument("--meeting", action="append", default=[],
+                                 type=normalize_meeting_identifier)
+    build_relations.add_argument("--kind", action="append", default=[],
+                                 choices=[value.value for value in EvidenceKind])
+    build_relations.add_argument("--proposition", action="append", default=[])
+    build_relations.add_argument("--provenance", action="store_true")
+    show_relations = subparsers.add_parser(
+        "show-proposition-relations", help="show a persisted proposition relation corpus")
+    show_relations.add_argument("--corpus", required=True)
+    show_relations.add_argument("--offset", type=int, default=0)
+    show_relations.add_argument("--limit", type=int, default=20)
+    show_relations.add_argument("--provenance", action="store_true")
+    review_relation = subparsers.add_parser(
+        "review-proposition-relation", help="record an explicit bilateral researcher review")
+    review_relation.add_argument("--corpus", required=True)
+    review_relation.add_argument("--pair", required=True)
+    review_relation.add_argument("--decision", required=True, choices=[
+        "EQUIVALENT", "OVERLAPPING", "DISTINCT", "CONFLICTING",
+        "NOT_COMPARABLE", "DEFER"])
+    review_relation.add_argument("--left-basis", action="append", default=[],
+        metavar="SEGMENT:START:END", help="exact span within a left proposition segment")
+    review_relation.add_argument("--right-basis", action="append", default=[],
+        metavar="SEGMENT:START:END", help="exact span within a right proposition segment")
+    review_relation.add_argument("--rationale")
+    review_relation.add_argument("--update", action="store_true")
+    review_relation.add_argument("--offset", type=int, default=0)
+    review_relation.add_argument("--limit", type=int, default=20)
+    review_relation.add_argument("--provenance", action="store_true")
     return parser
 
 
@@ -385,6 +422,47 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command in {"build-proposition-relations", "show-proposition-relations",
+                        "review-proposition-relation"}:
+        from threegpp.proposition_relations import (
+            PropositionRelationBuildRequest, PropositionRelationService,
+            render_proposition_relations)
+        with MetadataRepository(args.db) as repository:
+            service = PropositionRelationService(repository, args.data_dir)
+            if args.command == "build-proposition-relations":
+                corpus = service.build(PropositionRelationBuildRequest(
+                    proposition_corpus_id=args.proposition_corpus,
+                    organizations=args.organization,
+                    left_organizations=args.left_organization,
+                    right_organizations=args.right_organization,
+                    tdoc_ids=args.tdoc, meetings=args.meeting,
+                    evidence_kinds=[EvidenceKind(value) for value in args.kind],
+                    proposition_ids=args.proposition))
+                offset, limit = 0, 20
+            elif args.command == "show-proposition-relations":
+                corpus = service.load(args.corpus)
+                offset, limit = args.offset, args.limit
+            else:
+                loaded = service.load(args.corpus)
+                pair = next((value for value in loaded.pair_candidates
+                             if value.pair_id == args.pair), None)
+                if pair is None:
+                    raise ValueError("pair is not in this relation corpus")
+                propositions = {value.proposition_id: value
+                                for value in loaded.source_propositions}
+                left = propositions[pair.left_proposition_id]
+                right = propositions[pair.right_proposition_id]
+                left_basis = (_relation_basis_arguments(args.left_basis, left)
+                              if args.left_basis else None)
+                right_basis = (_relation_basis_arguments(args.right_basis, right)
+                               if args.right_basis else None)
+                corpus = service.review(args.corpus, args.pair, args.decision,
+                    left_basis=left_basis, right_basis=right_basis,
+                    rationale=args.rationale, update=args.update)
+                offset, limit = args.offset, args.limit
+            print(render_proposition_relations(corpus, offset=offset, limit=limit,
+                                               provenance=args.provenance), end="")
+        return 0
     if args.command in {"build-proposition-corpus", "show-proposition-corpus", "review-proposition"}:
         from threegpp.propositions import (PropositionCorpusBuildRequest,
             PropositionCorpusService, render_proposition_corpus)
@@ -904,6 +982,19 @@ def _snapshot_arguments(values: list[str]) -> dict[str, str]:
             raise ValueError("--snapshot must use MEETING=SNAPSHOT_ID")
         snapshots[meeting] = snapshot_id
     return snapshots
+
+
+def _relation_basis_arguments(values, proposition):
+    result = []
+    for value in values:
+        try:
+            segment, start, end = map(int, value.split(":"))
+            text = proposition.exact_text_segments[segment]
+        except (ValueError, IndexError) as exc:
+            raise ValueError("basis must use SEGMENT:START:END within the proposition") from exc
+        result.append({"segment_index": segment, "char_start": start,
+                       "char_end": end, "exact_text": text[start:end]})
+    return result
 
 
 def _build_link_graph(service, args):

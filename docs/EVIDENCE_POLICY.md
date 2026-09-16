@@ -148,6 +148,20 @@ does not establish equivalence, stance, support, opposition, consensus, evolutio
 or a meeting outcome. Missing evidence and unreviewed candidates are unknown
 states, not negative evidence.
 
+## V0.13 proposition relation authority
+
+A proposition relation is an explicit researcher analysis between two current
+accepted propositions. Each decision requires an exact basis from both
+propositions. It does not modify either proposition or its source evidence.
+
+The system never derives a decision from identical wording, lexical overlap,
+technical similarity, organization, meeting, or TDoc metadata. `EQUIVALENT` and
+the other relation values express only the recorded review. They do not establish
+company stance, support, opposition, consensus, meeting adoption, or temporal
+evolution. `DEFER`, an unreviewed pair, and absence of a pair are unknown states,
+not negative evidence. `NOT_COMPARABLE` is an explicit accepted analysis and is
+not equivalent to missing evidence.
+
 ## V0.6 Chair Note authority
 
 The official TDoc List defines the meeting document universe and official metadata. A selected Chair Note provides positive evidence only that it explicitly associates a referenced TDoc with the bounded recorded discussion context. Contribution bodies remain authoritative for company statements, while accepted reports/minutes remain authoritative for meeting agreements and decisions.

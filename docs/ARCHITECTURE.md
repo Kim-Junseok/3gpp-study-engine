@@ -250,6 +250,25 @@ Meeting-scoped evidence cannot enter this path. Artifacts below
 `data/derived/propositions/` become stale when their profile, inventory,
 normalization, SemanticEvidence, or rules change.
 
+## V0.13 proposition relation layer
+
+```text
+accepted propositions → disjoint-organization pair candidates
+→ explicit bilateral researcher review → accepted proposition relations
+```
+
+`threegpp.proposition_relations` reads a current V0.12 corpus and performs no
+acquisition. Canonical symmetric pairs retain both accepted proposition IDs and
+their provenance. No lexical or semantic rule assigns a relationship. A pair
+becomes an accepted relation only after an explicit non-`DEFER` review.
+
+The layer persists a manifest, deterministic pair candidates, immutable review
+history, and current accepted relations below
+`data/derived/proposition-relations/<wg>/<relation-corpus-id>/`. Checksums bind
+the relation corpus to its source corpus, accepted proposition set, profile,
+inventory, pair rules, and schemas. The service fails rather than truncating a
+scope above 5,000 eligible pairs.
+
 ## V0.6 Chair Note coverage layer
 
 ```text

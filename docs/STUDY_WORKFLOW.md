@@ -217,6 +217,31 @@ Reviews for missing candidate IDs do not transfer silently.
 For an explicit option child, inspect `context_source_unit_id` before reviewing;
 the parent source remains separate from the candidate text.
 
+## Explicit proposition relation review
+
+Build relation candidates only after the relevant propositions have been
+accepted in a current V0.12 corpus:
+
+```bash
+python -m threegpp.cli build-proposition-relations \
+  --proposition-corpus <proposition-corpus-id>
+python -m threegpp.cli show-proposition-relations \
+  --corpus <relation-corpus-id> --limit 20 --provenance
+python -m threegpp.cli review-proposition-relation \
+  --corpus <relation-corpus-id> --pair <pair-id> --decision OVERLAPPING
+```
+
+Omitted bilateral basis arguments select every exact text segment. Use repeated
+`--left-basis SEGMENT:START:END` and `--right-basis SEGMENT:START:END` arguments
+for narrower literal slices. A changed decision, basis, or rationale requires
+`--update`; the previous review remains in history. `DEFER` records a review but
+does not create an accepted relation.
+
+Review batches default to 20 and cannot exceed 100. More pairs require an
+explicit offset. Pair construction fails above 5,000 eligible pairs and never
+truncates the set. These operations read local proposition artifacts, write only
+derived relation artifacts, and perform zero official-source acquisition.
+
 ## Chair Note guided corpus expansion
 
 Use this order for a meeting/topic whose contribution bodies are incomplete:
