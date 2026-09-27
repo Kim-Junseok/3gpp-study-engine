@@ -3,16 +3,20 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 
 from threegpp.db import MetadataRepository
 from threegpp.ingest.downloader import HTTPDownloader, safe_filename
-from threegpp.models import CandidateInventory, MatchLevel, TDocAvailability, WorkingGroup
+from threegpp.models import (
+    CandidateInventory, MatchLevel, TDocAvailability, TDocMetadata, WorkingGroup,
+    normalize_meeting_identifier,
+)
 
 from .archive import inspect_package
 from .models import (
-    NORMALIZED_DOCUMENT_SCHEMA_VERSION, DocumentReceipt, ExtractionStatus, FetchOutcome,
+    NORMALIZED_DOCUMENT_SCHEMA_VERSION, ContentBlock, DocumentReceipt, ExtractionStatus, FetchOutcome,
     FetchPlanItem, NormalizationIdentity, NormalizedMember, NormalizedTDoc, RawArtifact,
     RetentionState, TDocFetchPlan,
 )
@@ -164,6 +168,101 @@ class DocumentService:
         text = gzip.decompress((self.root / receipt.text_path).read_bytes()).decode()
         return metadata, receipt, blocks, text
 
+    def read_source(
+        self, tdoc_id: str, working_group: WorkingGroup | str | None = None,
+        meeting: str | None = None,
+    ) -> tuple[TDocMetadata | None, DocumentReceipt, list[ContentBlock]]:
+        """Read validated normalized blocks without fetching or changing stored state.
+
+        Source reading does not require semantic extraction or proposition review.
+        Missing, stale, unsupported, and invalid sources raise ``ValueError``.
+        A partially parsed source returns its available blocks; callers must retain
+        the receipt's extraction status, member statuses, and warnings as gaps.
+        Retained raw bytes are verified when present. Missing raw or flattened-text
+        files do not prevent reading independently validated normalized blocks.
+        """
+        wanted = tdoc_id.strip().upper()
+        receipt = self.repository.get_document_receipt(wanted, working_group, meeting)
+        if receipt is None:
+            raise ValueError(f"normalized source is unavailable: {wanted}")
+        clauses, values = ["upper(tdoc_id)=?"], [wanted]
+        if working_group is not None:
+            clauses.append("working_group=?")
+            values.append(WorkingGroup.parse(working_group).value)
+        if meeting is not None:
+            clauses.append("meeting_number=?")
+            values.append(normalize_meeting_identifier(meeting))
+        identity = self.repository.connection.execute(
+            "SELECT tdoc_id,working_group,meeting_number FROM tdoc_documents WHERE "
+            + " AND ".join(clauses), values,
+        ).fetchone()
+        if identity != (receipt.tdoc_id, receipt.working_group.value, receipt.meeting):
+            raise ValueError(f"source receipt identity conflicts with document identity: {wanted}")
+        if receipt.schema_version != DocumentReceipt.model_fields["schema_version"].default:
+            raise ValueError(f"source receipt schema is stale: {wanted}")
+        readable = {ExtractionStatus.PARSED, ExtractionStatus.PARTIALLY_PARSED}
+        if receipt.extraction_status not in readable:
+            raise ValueError(f"normalized source is unreadable ({receipt.extraction_status.value}): {wanted}")
+        members = {member.filename: member for member in receipt.members}
+        if len(members) != len(receipt.members):
+            raise ValueError(f"source receipt contains duplicate member identities: {wanted}")
+        if receipt.primary_member is not None and receipt.primary_member not in members:
+            raise ValueError(f"source receipt primary member is missing: {wanted}")
+        expected_identity = NormalizationIdentity(
+            raw_sha256=receipt.raw.sha256,
+            parser_members={
+                name: f"{parser.name}@{parser.version}"
+                if (parser := parser_for(name)) else "unsupported"
+                for name in members
+            },
+            normalized_schema_version=self.normalized_schema_version,
+        )
+        expected_parsers = {
+            parser.name: parser.version for name in members
+            if (parser := parser_for(name)) is not None
+        }
+        if (receipt.normalization_identity != expected_identity
+                or receipt.parser_versions != expected_parsers):
+            raise ValueError(f"normalized source identity is stale or inconsistent: {wanted}")
+        if receipt.normalized_path is None or receipt.normalized_checksum is None:
+            raise ValueError(f"normalized source is unavailable: {wanted}")
+        path = self.root / receipt.normalized_path
+        if not path.resolve().is_relative_to(self.root.resolve()):
+            raise ValueError(f"normalized source path is outside the data root: {wanted}")
+        try:
+            raw_path = (self.root / "raw" / "tdocs" / receipt.working_group.value.lower()
+                        / receipt.meeting / receipt.tdoc_id / receipt.raw.filename)
+            if not raw_path.exists():
+                raw_path = receipt.raw.local_path
+            if raw_path.exists():
+                raw_bytes = raw_path.read_bytes()
+                if (len(raw_bytes) != receipt.raw.byte_size
+                        or hashlib.sha256(raw_bytes).hexdigest() != receipt.raw.sha256):
+                    raise ValueError(f"retained raw source checksum conflicts with receipt: {wanted}")
+            payload = path.read_bytes()
+        except OSError as exc:
+            raise ValueError(f"source bytes are unavailable or unreadable: {wanted}") from exc
+        if hashlib.sha256(payload).hexdigest() != receipt.normalized_checksum:
+            raise ValueError(f"normalized source checksum conflicts with receipt: {wanted}")
+        try:
+            blocks = [ContentBlock.model_validate_json(line)
+                      for line in gzip.decompress(payload).decode("utf-8").splitlines()]
+        except (ValueError, OSError, EOFError, zlib.error) as exc:
+            raise ValueError(f"normalized source blocks are unreadable: {wanted}") from exc
+        if len(blocks) != receipt.block_count:
+            raise ValueError(f"normalized source block count conflicts with receipt: {wanted}")
+        for order, block in enumerate(blocks, 1):
+            member = members.get(block.member_filename)
+            if (block.block_id != f"b{order:06d}" or block.order != order
+                    or member is None or member.extraction_status not in readable):
+                raise ValueError(f"normalized source block identity is invalid: {wanted}")
+            if not _valid_source_block(block):
+                raise ValueError(f"normalized source block structure is invalid: {wanted}/{block.block_id}")
+        if not any(_has_source_content(block) for block in blocks):
+            raise ValueError(f"normalized source contains no readable content: {wanted}")
+        metadata = self.repository.get_tdoc(receipt.working_group, receipt.meeting, receipt.tdoc_id)
+        return metadata, receipt, blocks
+
     def _raw_path(self, item):
         filename = safe_filename(str(item.source_url), f"{item.tdoc_id}.bin") if item.source_url else f"{item.tdoc_id}.bin"
         return self.root / "raw" / "tdocs" / item.working_group.value.lower() / item.meeting / item.tdoc_id / filename
@@ -211,6 +310,28 @@ def _gzip(data: bytes) -> bytes:
 def _atomic(path: Path, data: bytes):
     temp = path.with_name(f".{path.name}.part"); temp.write_bytes(data); temp.replace(path)
 def _sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+def _valid_source_block(block: ContentBlock) -> bool:
+    if block.page_number is not None and block.page_number < 1:
+        return False
+    if block.type in {"table", "sheet"}:
+        return (block.rows is not None and block.text is None
+                and (block.type != "sheet" or bool(block.sheet_name)))
+    if block.type not in {"paragraph", "heading", "page"} or block.text is None or block.rows is not None:
+        return False
+    if block.type == "page" and block.page_number is None:
+        return False
+    if block.type == "heading":
+        return (block.heading_level is not None and block.heading_level > 0
+                and bool(block.heading_path) and block.heading_path[-1] == block.text)
+    return block.heading_level is None
+
+
+def _has_source_content(block: ContentBlock) -> bool:
+    return bool(block.text and block.text.strip()) or any(
+        cell is not None and str(cell).strip() for row in block.rows or [] for cell in row
+    )
+
+
 def _flatten(members):
     parts=[]
     for member in members:

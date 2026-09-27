@@ -1,5 +1,42 @@
 # Study vocabulary
 
+## Ordinary research reports
+
+Use these default labels for explanatory reports:
+
+| Label | Use |
+|---|---|
+| Company Contribution | What a readable contribution says, with its source organizations |
+| Meeting Discussion | Context recorded by a selected Chair Note |
+| Meeting Outcome | What an authoritative meeting report or minutes records |
+| Source | TDoc, meeting, source link, member and actual section or statement locator |
+| Open Issue / Evidence Gap | A source's unresolved technical point or a limitation of the inspected material; distinguish these explicitly |
+
+Korean explanations may accompany these labels. Proposal, Observation,
+Conclusion, FFS, Agreement, and Decision are source-native labels: use them only
+when explicitly present, preserving the source's authority. A contribution's
+`Agreement` text is still contribution text. A parser category must not replace
+a source's explicit label in ordinary prose.
+
+Default reports do not expose SemanticEvidence, AcceptedProposition,
+PropositionCandidate, PropositionRelation, TopicProfile, Corpus ID, Review ID,
+SourceUnit, Ruleset, Checksum, SHA, Git SHA, or any corpus/profile/review identity.
+This restriction applies to their prose, tables, notes, and appendices. Put
+internal IDs, block references, hashes, and stored review metadata in a separate
+requested audit JSON artifact, such as `reports/audit/<report>.json`.
+
+Human sources identify the contribution or meeting document, its organizations
+where applicable, meeting, actual heading/numbered statement, and official/local
+source link. Identify a ZIP member as a member, not an invented local DOCX path.
+Use a short literal excerpt when the source has no section/page locator. Do not
+invent page numbers or use internal block IDs as the reader's locator.
+
+Faithful paraphrase, including Korean explanation, is allowed when the source
+and required context are validated. Source text and stored evidence remain
+literal. Readable source passages do not require proposition acceptance or
+relation review. Follow [RESEARCH_REPORT_GUIDE.md](RESEARCH_REPORT_GUIDE.md) for
+report selection, authority, writing, and audit separation.
+
 ## Topic corpus completion
 
 Normal completion output continues to use **Topic**, **Companies / TDocs**,
@@ -34,9 +71,9 @@ selected source snapshots, and accepted topic terminology profile, the
 following Chair-note-associated TDocs were found.” Authorship metadata does not
 establish support, opposition, or any other company stance.
 
-This guide defines the default research-facing vocabulary for a study of one
-3GPP TDoc. The engine retains its provenance and link models internally. The
-normal study view translates those models into three researcher questions:
+The following sections define the meeting-study vocabulary for one 3GPP TDoc.
+The engine retains its provenance and link models internally. This study view
+translates those models into three researcher questions:
 
 ```text
 TDoc
@@ -60,7 +97,7 @@ TDoc
 
 ## Default TDoc view
 
-The normal view uses exactly these primary sections:
+The `show-tdoc-study` meeting-study view uses exactly these primary sections:
 
 ```text
 DISCUSSION
@@ -154,16 +191,22 @@ automatically delete or prune either state.
 
 ## Researcher-reviewed proposition relations
 
-When a researcher explicitly reviews two accepted propositions, introduce the
-result as a researcher annotation:
+In explicit review/audit output, when provenance establishes that a researcher
+reviewed two accepted propositions, introduce the result as a researcher
+annotation:
 
 ```text
 Researcher-reviewed relation: OVERLAPPING
 ```
 
-Always show the left and right proposition, their organizations, exact bilateral
+In that review/audit output, show the left and right proposition, their organizations, exact bilateral
 bases, TDoc provenance, and review identity. Do not rewrite a relation as a
 company position, meeting decision, adoption, consensus, or historical trend.
 `UNREVIEWED`, `DEFER`, and pair absence mean that no accepted relation is
 available in this corpus. They do not mean disagreement, rejection, or lack of
 technical relationship.
+
+For a legacy record whose reviewer or authorization is not established, use
+"recorded review annotation" and preserve that uncertainty. A stored review ID
+alone does not establish human authorship. Ordinary reports do not require these
+annotations and do not reproduce their IDs or history.

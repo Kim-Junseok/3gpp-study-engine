@@ -1,5 +1,40 @@
 # Study workflow
 
+## V0.13.1 ordinary research report
+
+Route technical explanations, source-backed company-contribution summaries, and
+research reports to [RESEARCH_REPORT_GUIDE.md](RESEARCH_REPORT_GUIDE.md). This
+workflow reads actual passages and their required context. It does not require
+proposition preparation or relation review.
+
+```text
+research question + accepted topic scope
+  → report-sources --profile <id>
+  → validated bounded local source bundle
+      ├─ Company Contribution
+      ├─ Meeting Discussion
+      ├─ Meeting Outcome
+      └─ Open Issue / Evidence Gap
+  → Skill-authored explanation with human-readable sources
+```
+
+Use `report-sources --profile <id> --audit` only for requested provenance. Keep
+that JSON artifact separate from the human report, for example in
+`reports/audit/`. The core reads the database without migration and does not
+write evidence or review artifacts. It never acquires or repairs sources.
+
+A validated readable passage is eligible even when SemanticEvidence extraction,
+AcceptedProposition, or PropositionRelation is absent. Existing review records
+can aid navigation but cannot decide inclusion. Preserve source-native labels
+and technical qualifiers in Korean paraphrase. Do not create persistent review
+decisions while writing an ordinary report.
+
+Meeting/TDoc outcome questions continue to use the independent study view below.
+Explicit persistent-review requests use V0.12/V0.13. Debug and provenance
+questions use the separate audit view. New-topic terminology acceptance and
+bounded acquisition retain their existing boundaries. Source gaps do not grant
+permission to download, modify parsers, or expand the topic.
+
 ## V0.11 bounded direct-corpus completion
 
 Use this sequence for a contribution-content question spanning an accepted

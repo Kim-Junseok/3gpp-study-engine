@@ -34,6 +34,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--data-dir", type=Path, default=data_root())
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    report = subparsers.add_parser(
+        "report-sources", help="read bounded, validated report sources; no downloads or runtime changes")
+    report.add_argument("--profile", required=True)
+    report.add_argument("--snapshot", action="append", default=[], metavar="MEETING=SNAPSHOT_ID")
+    report.add_argument("--max-passages", type=int, default=80)
+    report.add_argument("--context-blocks", type=int, default=3)
+    report.add_argument("--max-passage-chars", type=int, default=12000)
+    report.add_argument("--audit", action="store_true", help="include exact source references and identities")
+
     list_meetings = subparsers.add_parser("list-meetings", help="list advertised meetings")
     _add_wg(list_meetings)
 
@@ -422,6 +431,24 @@ def _json(value: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.command == "report-sources":
+        from threegpp.report_sources import ReportSourceRequest, ReportSourceService
+        snapshots = {}
+        for value in args.snapshot:
+            meeting, separator, snapshot = value.partition("=")
+            if not separator or not meeting or not snapshot:
+                raise ValueError("snapshot must be MEETING=SNAPSHOT_ID")
+            meeting = normalize_meeting_identifier(meeting)
+            if meeting in snapshots and snapshots[meeting] != snapshot:
+                raise ValueError("conflicting snapshot selections")
+            snapshots[meeting] = snapshot
+        with MetadataRepository(args.db, read_only=True) as repository:
+            bundle = ReportSourceService(repository, args.data_dir).build(ReportSourceRequest(
+                profile_id=args.profile, chair_note_snapshots=snapshots,
+                max_passages_per_source=args.max_passages, context_blocks=args.context_blocks,
+                max_passage_chars=args.max_passage_chars))
+            _json(bundle.presentation(audit=args.audit))
+        return 0
     if args.command in {"build-proposition-relations", "show-proposition-relations",
                         "review-proposition-relation"}:
         from threegpp.proposition_relations import (

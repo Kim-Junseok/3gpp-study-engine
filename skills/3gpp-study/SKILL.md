@@ -1,9 +1,59 @@
 ---
 name: 3gpp-study
-description: Build provenance-aware 3GPP studies and evidence-grounded topic summaries through the deterministic Python core. Never infer company stance, proposal equivalence, adoption, or trends.
+description: Write source-grounded 3GPP technical reports and meeting studies, or record explicitly requested proposition reviews, through the deterministic Python core. Keep contribution, discussion, and meeting-outcome authority separate.
 ---
 
 # 3GPP Study
+
+## Route the research question
+
+| Request | Workflow |
+|---|---|
+| Explain or summarize technical content; compare contribution mechanisms; write a company-contribution report | Ordinary research report; read [the report guide](../../docs/RESEARCH_REPORT_GUIDE.md) |
+| What was discussed or agreed, or what happened with a TDoc? | Meeting study; use the independent Discussion, Contribution, and Meeting outcome view |
+| Prepare persistent propositions or record explicit proposition/relation decisions | V0.12/V0.13 preparation and review below |
+| Inspect source identities, exact stored evidence, hashes, or review history | Explicit audit/provenance output |
+
+A report request does not request proposition preparation, relation review, or
+new source acquisition. Do not introduce an approval step for ordinary report
+writing. Existing topic-term acceptance and acquisition boundaries still apply.
+
+## Ordinary research reports
+
+Use `threegpp report-sources --profile <id>` to obtain a bounded local source
+bundle. The Python core validates and selects source material; write the report
+from the returned passages and required surrounding context. `--audit` provides
+internal provenance when requested. Keep audit JSON physically separate from the
+reader-facing Markdown, for example under `reports/audit/`.
+
+A source passage may support a general research report when its literal content
+and required context have been successfully read and validated. SemanticEvidence,
+AcceptedProposition, and PropositionRelation may aid navigation or analysis, but
+none is a prerequisite for inclusion. Zero extraction results or absent reviews
+must not exclude readable source material. A raw archive alone is insufficient.
+
+Keep Company Contribution, Meeting Discussion, and Meeting Outcome independent.
+Preserve missing/unreadable/unsupported/truncated material as an Open Issue /
+Evidence Gap. Do not fetch, repair parsers, or rebuild runtime artifacts to fill
+those gaps while following the report read path.
+
+Write faithful Korean explanations when requested. Preserve conditions, numbers,
+modality, alternatives, and exact organization attribution. Use source-native
+Proposal, Observation, Conclusion, FFS, Agreement, or Decision labels only when
+explicitly present. A label in a contribution does not confer meeting authority.
+Compare concrete technical dimensions with sources for both sides; do not assign
+formal proposition relations, company stance, consensus, adoption, or evolution.
+
+Use human sources: TDoc, organization, meeting, actual heading or numbered
+statement, source link, and member when needed. Default report prose must not
+expose SemanticEvidence, AcceptedProposition, PropositionCandidate,
+PropositionRelation, TopicProfile, corpus/profile/review IDs, SourceUnit,
+ruleset, checksum, SHA, or Git SHA. Follow the complete vocabulary and source
+rules in [STUDY_VOCABULARY.md](../../docs/STUDY_VOCABULARY.md).
+
+Existing review annotations are optional. Reading them never authorizes a new
+decision. Preserve legacy records and review history; do not infer human review
+from a stored acceptance label or rewrite records to justify report prose.
 
 ## V0.11 bounded topic corpus completion
 
@@ -62,19 +112,24 @@ references, submitter, title, meeting, or explicit agreement references. Do not
 fetch the contribution for those questions.
 
 Questions about what a specific TDoc proposes, argues, observes, concludes, or
-says technically require inspected contribution content. If the study view says
-`TDoc content inspected: No`, invoke `complete-tdoc-evidence --wg <WG> --tdoc
-<ID>` unless the user requested metadata-only, offline, local-only, or
-no-download behavior. This authorization applies only to the named TDoc. Use
-`--offline` when network acquisition is prohibited.
+says technically require readable contribution content. Reuse validated local
+source passages for an ordinary explanation even if the extraction-based study
+view says `TDoc content inspected: No`. If the required content is unavailable,
+a direct content request for that named TDoc may authorize the separate
+`complete-tdoc-evidence --wg <WG> --tdoc <ID>` workflow unless the user requested
+metadata-only, offline, local-only, or no-download behavior. It does not authorize
+topic-corpus completion. Use `--offline` only for separately authorized local
+preparation; ordinary report reads do not repair downstream state.
 
 Do not answer a contribution-content question from its title, organization,
-Chair Note context, or meeting outcome. After completion, answer from the
-Contribution-scoped SemanticEvidence in the standard three-section study view.
+Chair Note context, or meeting outcome. After completion, the meeting-study view
+uses Contribution-scoped SemanticEvidence. An ordinary technical explanation
+instead uses validated source passages through the report workflow; extraction
+is not its eligibility gate.
 
 ## V0.8.1 research-facing TDoc view
 
-For a user-facing question about one TDoc, run `show-tdoc-study --wg <WG>
+For a meeting-study question about one TDoc, run `show-tdoc-study --wg <WG>
 --tdoc <ID>` and organize the answer as Discussion, Contribution, and Meeting
 outcome. Follow `docs/STUDY_VOCABULARY.md`. Use `--provenance` only when the user
 asks for evidence details or engine internals.
@@ -86,10 +141,10 @@ Not observed in the selected Chair Note does not mean not discussed. No explicit
 meeting-outcome reference does not mean rejection or prove that no outcome
 exists. A contribution conclusion is not a meeting conclusion.
 
-If the view reports `TDoc content inspected: No`, state that content inspection
-is required to answer proposal, observation, conclusion, or FFS questions. Do
-not fetch the contribution in V0.8.1. Selective on-demand acquisition belongs to
-V0.9.
+If the view reports `TDoc content inspected: No`, explain its extraction-state
+gap when relevant. Check report-source readability before concluding that no
+technical explanation is possible. Do not fetch the contribution in V0.8.1.
+Selective on-demand acquisition belongs to V0.9.
 
 ## V0.8 explicit evidence links
 
@@ -129,7 +184,7 @@ If the user explicitly asks to download and prepare candidates:
 3. Run `threegpp fetch-tdocs --plan <plan.yaml>` only after the explicit action is clear.
 4. Report counts for parsed, partial, unsupported, text-unavailable, and failed outcomes. Report structural/provenance facts only.
 
-Ordinary `study-inventory` never downloads TDoc bodies. Never independently parse paths or rescore records when the core API supplies the result. Never infer technical proposals, agreements, conclusions, company positions, or support/opposition from extracted text.
+Ordinary `study-inventory` never downloads TDoc bodies. Never independently parse paths or rescore records when the core API supplies the result. Its metadata inventory cannot establish technical proposals, agreements, conclusions, company positions, or support/opposition. For technical explanations, use the report source workflow.
 
 For “find relevant passages about HARQ feedback within normalized RAN1#125
 TDocs”, run `threegpp index-documents --wg RAN1 --meeting 125`, then
@@ -146,12 +201,15 @@ source blocks are needed. Present the role and its basis, kind, scope, literal
 statement, exact source organizations for contribution evidence, EvidenceRefs,
 and detection rule/cue. These commands download no TDocs.
 
-Only describe “company proposed X” for `proposal + contribution` evidence whose
+When reporting stored SemanticEvidence, describe “company proposed X” only for
+`proposal + contribution` evidence whose
 stored organizations include that company. Only describe “RAN agreed X” for
 `agreement + meeting` evidence from an accepted meeting-report role. A company’s
-“we agree” wording is never a meeting agreement. Do not independently classify,
-paraphrase, infer support/opposition or company positions, cluster proposals, or
-synthesize cross-meeting trends.
+“we agree” wording is never a meeting agreement. Preserve the stored
+classification and literal statement in extraction/audit output. This rule does
+not prohibit faithful paraphrase of validated source passages in an ordinary
+report. Do not infer support/opposition or company positions, cluster proposals,
+or synthesize cross-meeting trends from extraction output.
 
 ## V0.12 proposition preparation
 
@@ -173,8 +231,10 @@ corpus. Inspect bounded batches with `show-proposition-relations`. Never assign 
 relation automatically. Use `review-proposition-relation` only for a decision
 the researcher explicitly provides, and preserve exact bilateral bases.
 
-Describe accepted values as researcher-reviewed relations. Cite both proposition
-IDs, organizations, TDocs, EvidenceRefs, bases, and review identity. Never turn
+In explicit review/audit output, describe accepted values as recorded review
+annotations. Cite both proposition IDs, organizations, TDocs, EvidenceRefs,
+bases, and review identity. State researcher authorship only when the available
+provenance establishes it. Never turn
 `EQUIVALENT`, `OVERLAPPING`, `DISTINCT`, `CONFLICTING`, or `NOT_COMPARABLE` into
 company stance, consensus, meeting adoption, rejection, or proposition
 evolution. Treat `DEFER`, `UNREVIEWED`, and pair absence as unknown. These
@@ -182,7 +242,7 @@ commands perform no official-source acquisition.
 
 ## V0.5 evidence-grounded topic answers
 
-Run `threegpp study-topic --query <query>` over already-local state. Structure the answer as: Topic; Relevant contribution evidence; Meeting-level evidence by authority meeting; What the meeting agreed to do; Relevant qualifications; What is not established; Coverage. Every technical statement must identify TDoc, member, kind/scope, authority meeting, EvidenceRef, and literal support.
+For an explicit study of extracted evidence, run `threegpp study-topic --query <query>` over already-local state. Keep contribution evidence, meeting evidence by authority meeting, qualifications, and coverage distinct. Audit output identifies TDoc, member, kind/scope, authority meeting, EvidenceRef, and literal support. Ordinary research reports use `report-sources` and human-readable citations instead; stored extraction is an optional navigation aid.
 
 Treat `STUDY` as “the meeting agreed to study”, never adopted, selected, approved, or standardized. Inspect attached context and preserve limitations. No attached context does not establish that none exists. Organization grouping identifies contribution origin only, not stance. Similar contribution and meeting text without a literal link means relationship/adoption is **not established**, not adopted or rejected. Begin coverage-limited synthesis with “Within the currently normalized material”.
 

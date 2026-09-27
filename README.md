@@ -1,6 +1,9 @@
 # 3GPP Study Engine
 
-`3gpp-study-engine` is a provenance-first research foundation for public 3GPP meeting material. A research-facing TDoc view answers three questions first:
+`3gpp-study-engine` reads public 3GPP meeting material for source-grounded
+technical reports and meeting studies. Ordinary reports explain validated source
+passages and their context. A separate TDoc meeting-study view answers three
+questions:
 
 ```text
 TDoc
@@ -12,6 +15,33 @@ TDoc
 Use `show-tdoc-study --wg <WG> --tdoc <ID>` for this view. It reports whether a selected Chair Note references the TDoc, what inspected contribution evidence says, and whether prepared meeting-outcome evidence explicitly references it. Add `--provenance` to inspect the underlying references, link identities, and backend states. The command reads local evidence only and performs no download. See `docs/STUDY_VOCABULARY.md` for the canonical wording.
 
 V0.8 supplies the deterministic document/reference-level links beneath this view. It connects contribution evidence, Chair Note discussion records, and authoritative meeting evidence without changing the accepted evidence-authority hierarchy.
+
+## V0.13.1 research reports
+
+Use the report read path for technical explanations and company-contribution
+summaries over an accepted topic scope:
+
+```bash
+python -m threegpp.cli report-sources --profile <profile-id>
+```
+
+The command returns a bounded local source bundle with contribution passages,
+selected Chair Note discussion, authoritative meeting outcomes, source locators,
+and evidence gaps. It reads the existing database without migration or source
+acquisition. Readable source passages remain eligible when semantic extraction
+or proposition review is absent. An unreadable source remains a gap.
+
+The Skill writes the report from the literal passages and required context. It
+uses Company Contribution, Meeting Discussion, Meeting Outcome, Source, and
+Open Issue / Evidence Gap, with source-native labels and human-readable
+citations. Source-grounded Korean paraphrase preserves technical conditions,
+alternatives, numbers, and modality. Report writing creates no persistent review
+decisions.
+
+Use `--audit` for requested provenance, and keep its JSON separate from the human
+report, such as under `reports/audit/`. See the
+[research report guide](docs/RESEARCH_REPORT_GUIDE.md) for routing, source
+eligibility, report writing, and the limits of automated validation.
 
 ## V0.11 bounded topic corpus completion
 

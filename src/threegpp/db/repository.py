@@ -37,11 +37,15 @@ current_view_present
 
 
 class MetadataRepository:
-    def __init__(self, path: Path | str = Path("data/metadata.duckdb")) -> None:
+    def __init__(self, path: Path | str = Path("data/metadata.duckdb"), *,
+                 read_only: bool = False) -> None:
         self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.connection = duckdb.connect(str(self.path))
-        ensure_schema(self.connection)
+        self.read_only = read_only
+        if not read_only:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.connection = duckdb.connect(str(self.path), read_only=read_only)
+        if not read_only:
+            ensure_schema(self.connection)
 
     def close(self) -> None:
         self.connection.close()

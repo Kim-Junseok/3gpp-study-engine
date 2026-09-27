@@ -1,5 +1,35 @@
 # Evidence policy
 
+## V0.13.1 report source authority
+
+A source passage may support a general research report when its literal content
+and required context have been successfully read and validated. SemanticEvidence,
+AcceptedProposition, and PropositionRelation can aid navigation or analysis;
+none is a prerequisite for inclusion. An unreadable source remains an evidence
+gap. A raw archive or metadata match alone does not establish its contents.
+
+Company contributions, selected Chair Note discussion, and authoritative meeting
+outcomes remain independent channels. Missing or unreviewed material in one
+channel cannot exclude valid sources from another channel or supply another
+channel's authority. Report scope remains bounded by the selected meetings,
+prepared sources, and accepted topic terminology.
+
+Faithful Korean paraphrase belongs to report prose. It preserves conditions,
+numbers, modality, source-native labels, alternatives, and organization
+attribution. It does not change stored literal evidence, exact reviewed spans,
+or annotations. Explicit source labels guide the report wording; stored extractor
+categories remain available for audit and do not override the source's label.
+
+Ordinary reports use human-readable citations. Internal source identities,
+hashes, extraction metadata, and review records belong in a separate requested
+audit artifact. A report request never creates proposition/relation decisions.
+Existing reviews are optional annotations and remain unchanged. Do not infer
+human authorship or authorization from a legacy review ID or accepted state.
+
+`report-sources` reads local state without acquisition or downstream repair.
+Missing context, unsupported sources, and selection truncation stay explicit.
+See [RESEARCH_REPORT_GUIDE.md](RESEARCH_REPORT_GUIDE.md) for the report contract.
+
 ## V0.11 corpus-completion boundary
 
 Corpus completion is an operational statement that eligible direct-profile
@@ -44,7 +74,9 @@ Metadata, a title, organization attribution, Chair Note context, and
 meeting-outcome text do not establish what a contribution itself proposes,
 observes, concludes, or leaves for further study. Only fresh
 contribution-scoped SemanticEvidence extracted from inspected contribution
-content may populate those categories.
+content may populate those categories in the V0.9 extraction/study-view model.
+Ordinary reports use the independent validated-source eligibility rule above;
+they do not require that an extractor classified the passage.
 
 A successful extraction with zero qualifying statements still establishes that
 the available contribution content was inspected under the current rules. A
@@ -114,7 +146,8 @@ Snippets preserve literal source text and are non-authoritative bounded views.
 # Explicit semantic evidence
 
 V0.4 semantic evidence is derived analysis tied to one or more exact normalized
-blocks. Literal statements are never paraphrased. A lexical hit is not semantic
+blocks. Stored literal statements are never paraphrased. Explanatory report prose
+may paraphrase validated passages without changing those records. A lexical hit is not semantic
 evidence, and semantic evidence is not a cross-meeting trend.
 
 Authority is role-gated. Company contributions may yield only contribution-scope

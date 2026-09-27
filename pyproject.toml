@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "3gpp-study-engine"
-version = "0.13.0"
+version = "0.13.1"
 description = "Provenance-bound propositions and explicit researcher relations for 3GPP study material"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -1,5 +1,47 @@
 # Architecture
 
+## V0.13.1 report source read path
+
+`threegpp.report_sources.ReportSourceService` builds a bounded
+`ReportSourceBundle` from the accepted direct topic scope and prepared local
+sources. `report-sources --profile <id>` exposes its presentation view; `--audit`
+adds exact provenance. The Skill writes technical prose from the bundle.
+
+```text
+accepted topic terms + selected meetings/sources
+  → validated local source reads
+      ├─ contribution passages + required context
+      ├─ selected Chair Note discussion + literal TDoc associations
+      └─ authoritative report outcomes + qualifications
+  → bounded source bundle + coverage/gaps
+  → Skill-authored report + human-readable sources
+
+requested audit → separate JSON with source identities and processing metadata
+```
+
+Source eligibility depends on reading and validating the literal passage and
+required context. SemanticEvidence, accepted propositions, and relation reviews
+are not dependencies for contribution inclusion. Optional annotations remain
+separate from source authority and selection. The read path neither assigns
+review decisions nor rewrites existing ones.
+
+`ReportSourceRequest` carries the profile, any explicit Chair Note selections,
+and passage/context bounds. The bundle keeps contribution, discussion, and
+outcome collections independent. Each collection supplies actual locators and
+source references. Missing, unsupported, partial, or truncated material remains
+visible in coverage and gaps. Source-native labels describe the returned text;
+they do not create new SemanticEvidence or transfer meeting authority.
+
+The CLI opens the existing database read-only without schema migration. Source
+reads use stored receipts and validated normalized material without downloading,
+normalizing, indexing, extracting, or persisting derived research state. Report
+Markdown and a requested audit JSON are deliverables outside runtime evidence.
+This layer adds no parser, LLM integration, or organization-level analysis.
+
+The source bundle does not prove that a generated explanation is faithful.
+Report acceptance also checks the prose against source passages and context.
+See [RESEARCH_REPORT_GUIDE.md](RESEARCH_REPORT_GUIDE.md) for authoring rules.
+
 ## V0.11 bounded completion layer
 
 `threegpp.topic_completion` is a narrow orchestration layer:
@@ -132,7 +174,11 @@ V0.2a.3 preserves the accepted boundaries:
 4. `threegpp.normalize` classifies snapshot roles, derives role-specific views, and parses spreadsheet metadata.
 5. `threegpp.db.MetadataRepository` owns schema migration, safe merge, persistence, and metadata filters.
 6. `threegpp.study` produces metadata-only candidate inventories.
-7. `skills/3gpp-study` orchestrates these interfaces but owns no research logic.
+7. `skills/3gpp-study` routes requests and writes source-grounded explanations;
+   deterministic retrieval, source validation, and persistent review semantics
+   remain Python-core responsibilities.
+8. `threegpp.report_sources` provides bounded source material independently of
+   extraction and proposition-review state; it does not generate report prose.
 
 ```text
 User → 3GPP Study Skill → StudyRequest → Python core
@@ -142,7 +188,7 @@ User → 3GPP Study Skill → StudyRequest → Python core
                                       ├─ persistence
                                       └─ retrieval/study
 
-CLI = developer/debug interface
+CLI = operational interface; report-sources also supplies report-writing inputs
 ```
 
 ## Ingestion modes

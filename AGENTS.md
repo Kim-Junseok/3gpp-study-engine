@@ -13,8 +13,31 @@ Build a general, provenance-first system for studying 3GPP RAN meeting material.
 ## Research-facing 3GPP study vocabulary
 
 For user-facing 3GPP study output, follow `docs/STUDY_VOCABULARY.md`.
-The default per-TDoc view answers three questions: Discussion, Contribution,
-and Meeting outcome. Do not expose graph, link, or status terminology unless
+Route ordinary technical explanations, company-contribution summaries, and
+research reports through `docs/RESEARCH_REPORT_GUIDE.md`. A source passage is
+eligible when its literal content and required context have been read and
+validated. SemanticEvidence, AcceptedProposition, and PropositionRelation are
+optional aids; none is a report eligibility gate. An unreadable source remains
+an evidence gap. Do not require proposition preparation or review to write a
+report, and do not create review records from a report request.
+
+The Python core supplies a bounded read-only source bundle through
+`report-sources --profile <id>`; the Skill writes the explanation. Keep company
+contributions, selected Chair Note discussion, and authoritative meeting outcomes
+as three independent source channels. A missing channel cannot exclude readable
+material from another channel or supply its authority.
+
+Default report vocabulary is Company Contribution, Meeting Discussion, Meeting
+Outcome, Source, and Open Issue / Evidence Gap. Use Proposal, Observation,
+Conclusion, FFS, Agreement, and Decision only when present in the source, with
+that source's authority. Faithful Korean paraphrase belongs in report prose;
+stored source text, evidence, and reviewed spans remain literal. Put internal
+identities, extraction metadata, hashes, and review history in a separate audit
+artifact only when requested. Preserve legacy review provenance without claiming
+that an automated record proves a human decision.
+
+The per-TDoc meeting-study view answers three questions: Discussion,
+Contribution, and Meeting outcome. Do not expose graph, link, or status terminology unless
 the user requests engine internals. Absence from a selected Chair Note does
 not prove that a TDoc was not discussed. Absence of an explicit meeting-outcome
 reference is not rejection and does not prove that no meeting outcome exists.
@@ -24,6 +47,11 @@ that explicitly requires the technical content of a specific TDoc may authorize
 selective completion through the V0.9 workflow unless the user requests
 offline, local-only, or no-download behavior. Do not extend that authorization
 to unrelated TDocs.
+
+`report-sources` never acquires, normalizes, indexes, extracts, or repairs source
+state. An ordinary report request does not authorize corpus completion. Keep
+missing, unsupported, and truncated sources visible; use the separate existing
+preparation workflow only within its authorized scope.
 
 For a new research topic, do not silently expand the user's wording through
 semantic similarity or model-generated synonyms. Use the topic bootstrap and
