@@ -12,6 +12,8 @@ build/
 *.log
 *.tmp
 *.part
+var/
+/work/
 /*.zip
 /*.tar
 /*.tar.gz
