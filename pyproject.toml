@@ -23,12 +23,15 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "xlwt>=1.3,<2"]
+web = ["fastapi>=0.115,<0.130", "uvicorn>=0.32,<1", "Jinja2>=3.1,<4", "python-multipart>=0.0.18,<1"]
+web-test = ["playwright>=1.49,<2"]
 
 [project.scripts]
 threegpp = "threegpp.cli:main"
+threegpp-web = "threegpp_web.__main__:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/threegpp"]
+packages = ["src/threegpp", "src/threegpp_web"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

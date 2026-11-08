@@ -1,5 +1,51 @@
 # Architecture
 
+## Personal web adapter (V0.14 work branch)
+
+`threegpp_web` is an optional local FastAPI application, independent of the CLI.
+It does not change the research core or evidence authority. Authentication and
+CSRF protect all question, scope, job, report and source routes. The default
+listener is loopback. Remote binding requires secure-cookie configuration and a
+separately verified HTTPS/access boundary; no deployment provider is selected.
+
+```text
+authenticated question → manual scope + literal terminology preview
+  → explicit revision approval → durable SQLite job → single worker
+  → read-only existing DuckDB + validated local source bundle
+  → source/gap presentation (live model disabled)
+```
+
+All source DB connections disable DuckDB external access and extension autoload
+before user queries, and reject main-schema views. Only explicit term approval
+writes topic profile configuration. App tasks, approvals, job attempts and events
+live in `state_root/app.sqlite3`; public source bundles and private relative asset
+maps live in `state_root/results/<job>/`. Auth sessions use a separate DB and do
+not enter portable backups. A process lock enforces the one-process service and
+prevents stopped-state backups while the app runs. Ten duplicate submissions
+share one job. Restarted pending/running jobs become interrupted without replay.
+
+Source assets resolve only through a stored relative allowlist and original
+receipt checksums, rechecked on each authenticated download. Server absolute paths
+never become browser links. Report prose is not written from metadata alone.
+The default result is source-reading readiness with no report. An explicitly
+selected synthetic mode creates only clearly labelled fixtures and quotation
+cards for Stage A verification; it is not a real research corpus or report.
+
+`threegpp_web.model` prepares a **disconnected, disabled** future Responses API
+adapter. Tests use MockTransport, not a real provider. It requires a selected
+model, verified prices, authorization and tokenizer configuration; worst-case
+cost reservations, uncertain-call retention and no automatic retries are tested.
+It is not activated by an API key environment variable. Stage B must deliberately
+wire this adapter after user authorization, with its ledger in `app.sqlite3` so
+existing state backup also preserves reservations.
+
+`threegpp_web.corpus` inspects/packages/restores existing source data offline,
+checks transfer digests separately from original provenance, and never creates
+missing research state. `threegpp_web.state_backup` restores app history/results
+separately with fresh authentication. Source receipts remain unchanged when data
+move. Provider, domain, recurring backup policy and actual-corpus/model acceptance
+are deferred. See the work contract and transfer/run guides for boundaries.
+
 ## V0.13.1 report source read path
 
 `threegpp.report_sources.ReportSourceService` builds a bounded

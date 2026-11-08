@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% set login_page = true %}
+{% block content %}
+<div class="login-layout">
+  <div class="login-intro"><p class="eyebrow">YOUR RESEARCH, WITH SOURCES</p><h1>질문을 남기고,<br>근거를 확인하세요.</h1><p class="lede">준비된 3GPP 자료를 읽고 조사 범위와 출처를 함께 남기는 개인 연구 공간입니다.</p><div class="login-rule" aria-hidden="true"></div><p class="muted">질문 → 범위 확인 → 작업 진행 → 결과 검토</p></div>
+  <section class="panel login-panel" aria-labelledby="login-title"><span class="lock-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2" stroke="currentColor" stroke-width="1.5"/></svg></span><h2 id="login-title">연구 공간에 접속</h2><p class="muted">설정한 접속 암호를 입력하세요.</p><form action="/login" method="post" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label for="password">접속 암호</label><input type="password" id="password" name="password" required autocomplete="current-password" autofocus><button class="button button-primary button-full" type="submit">접속하기 <span aria-hidden="true">→</span></button></form><p class="form-footnote">공유 기기에서는 사용 후 로그아웃하세요.</p></section>
+</div>
+{% endblock %}

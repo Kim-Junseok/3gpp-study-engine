@@ -18,6 +18,14 @@ V0.8 supplies the deterministic document/reference-level links beneath this view
 
 ## V0.13.1 research reports
 
+The work-branch personal web adapter is documented in
+[WEB_APP.md](docs/WEB_APP.md), with its approved scope in
+[TASK_CONTRACT_V014.md](docs/TASK_CONTRACT_V014.md). It reads prepared local
+material and never acquires sources. Stage A web/fixture verification is separate
+from Stage B acceptance using a real supplied corpus and an authorized real model.
+No live model is enabled. See [CORPUS_TRANSFER.md](docs/CORPUS_TRANSFER.md) before
+transferring existing research data; the code repository alone contains no corpus.
+
 Use the report read path for technical explanations and company-contribution
 summaries over an accepted topic scope:
 

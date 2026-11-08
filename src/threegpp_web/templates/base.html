@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{{ page_title|default('연구 노트') }} · 3GPP Study</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="3GPP Study 홈">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none"><path d="M5 5h7v7H5zM16 5h7v7h-7zM5 16h7v7H5z" stroke="currentColor" stroke-width="1.7"/><path d="m16 23 7-7m-7 0h7v7" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        <span><strong>3GPP Study</strong><small>개인 연구 노트</small></span>
+      </a>
+      {% if not login_page|default(false) %}
+      <nav class="main-nav" aria-label="주 메뉴">
+        <a href="/#new-question" class="nav-item"><span aria-hidden="true">＋</span> 새 질문</a>
+        <a href="/#history" class="nav-item">조사 이력</a>
+      </nav>
+      <form action="/logout" method="post" class="logout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button button-quiet" type="submit">로그아웃</button>
+      </form>
+      {% endif %}
+      <div class="header-footnote"><span class="status-dot" aria-hidden="true"></span>준비된 자료만 읽습니다</div>
+    </header>
+
+    <div class="workspace">
+      <div class="workspace-topline"><span>RESEARCH WORKSPACE</span><span class="privacy-label"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5" stroke="currentColor"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor"/></svg>개인용</span></div>
+      {% if fixture_mode|default(false) %}
+      <div class="notice notice-fixture" role="status"><strong>화면 검증용 자료</strong><span>합성 fixture를 사용 중입니다. 실제 3GPP 자료나 연구 결과가 아닙니다.</span></div>
+      {% endif %}
+      {% if error|default(none) %}<div class="notice notice-error" role="alert"><strong>확인이 필요합니다</strong><span>{{ error }}</span></div>{% endif %}
+      {% if message|default(none) %}<div class="notice notice-info" role="status">{{ message }}</div>{% endif %}
+      <main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
+      <footer class="site-footer"><span>출처와 함께 남기는 연구 기록</span><span>A · 웹 흐름 검증 <span class="footer-divider">/</span> B · 실제 연구 검증 대기</span></footer>
+    </div>
+  </div>
+</body>
+</html>
