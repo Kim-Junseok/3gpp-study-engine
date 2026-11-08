@@ -2,15 +2,35 @@
 
 ## 핵심 요약
 
-현재 로컬 문서에서 Fast-ARQ의 설계 질문은 세 갈래로 나타난다. UL에서는 HARQ process failure를 어떤 DCI로 알릴지가 쟁점이다. 성공한 process의 ACK까지 명시할 필요가 있는지도 별도로 논의한다. DL에서는 NACK-to-ACK 오류율 설계와 오류 검출·보고의 필요성을 다룬다. [vivo, Proposal 1–3](#source-r1-2603619), [CATT, Observation 1·Proposal 4](#source-r1-2603887), [OPPO, Proposal 1–3](#source-r1-2604096).
+이 보고서는 RAN1 #125–#126의 Fast-ARQ 관련 자료 중 **원문을 내려받고 관련 본문을 확인한 TDoc 8개**를 다룬다. 구성은 회사 contribution 7개와 RAN2의 수신 LS 1개다. 주요 설계 질문은 다음 세 가지다.
 
-vivo의 문서는 UL scheduling DCI를 이용한 NACK 전달을 제안한다. OPPO의 문서는 scheduling DCI와 여러 process를 위한 dedicated DCI를 함께 고려하며, 두 방식의 적용 조건을 설명한다. ZTE·Sanechips의 문서는 특정 DCI 방식을 고르기보다 HARQ 의제에서 RAN1 측면을 계속 연구하자고 제안한다. [vivo, Proposal 1](#source-r1-2603619), [OPPO, UL discussion·Proposal 1](#source-r1-2604096), [ZTE·Sanechips, Proposal 1](#source-r1-2604801).
+- **UL failure indication — 어떤 DCI로 HARQ process failure를 알릴 것인가?** vivo의 contribution은 UL scheduling DCI로 명시적 NACK을 전달하자고 제안한다. [vivo, R1-2603619, Proposal 1](#source-r1-2603619). OPPO의 contribution은 scheduling DCI와 여러 process를 위한 dedicated DCI를 고려 대상으로 제시한다. [OPPO, R1-2604096, Proposal 1](#source-r1-2604096).
 
-선택된 Chair Note에서 #125는 HARQ 연구에 포함해 결론이 나면 RAN2에 응답한다는 진행 방향을 기록한다. #126은 같은 의제의 후속 논의와 “No immediate RAN1 action”을 기록한다. 이 기록만으로 특정 회사 설계의 채택을 확인할 수는 없다. [#125 회의 논의](#source-chair125), [#126 회의 논의](#source-chair126).
+- **UL process-status indication — NACK만 알릴 것인가, 성공한 process의 ACK도 알릴 것인가?** vivo의 contribution은 명시적 ACK의 필요성과 NACK 설계를 ACK까지 확장할 수 있는지를 추가 연구하자고 제안한다. [vivo, R1-2603619, Proposal 2](#source-r1-2603619). CATT의 contribution은 NACK-only와 explicit ACK/NACK 중 어느 방식을 쓸지는 signaling 설계에 맡길 수 있다고 관찰로 제시한다. [CATT, R1-2603887, Observation 1](#source-r1-2603887).
+
+- **DL NACK-to-ACK — 오류율을 어떻게 설계하고, 오류 검출·보고가 필요한가?** OPPO의 contribution은 6GR HARQ-ACK 설계에서 CRC가 없는 전송의 NACK-to-ACK 오류율이 0.1%를 넘지 않도록 하자고 제안한다. [OPPO, R1-2604096, Proposal 2 및 후속 문장](#source-r1-2604096). CATT의 contribution은 6GR의 L1/L2 NACK-to-ACK 오류 검출과 보고를 연구하자고 제안한다. [CATT, R1-2603887, Proposal 4](#source-r1-2603887). OPPO의 contribution은 상세 설계 전에 UE 오류 보고의 필요성과 사용 사례부터 확인하자고 제안한다. [OPPO, R1-2604096, Proposal 3](#source-r1-2604096).
+
+ZTE·Sanechips의 contribution은 HARQ 의제에서 Fast-ARQ의 RAN1 측면을 계속 연구하자고 제안한다. [ZTE·Sanechips, R1-2604801, Proposal 1](#source-r1-2604801).
+
+별도로 읽은 #125 Chair Note는 이 사안을 HARQ 연구에 포함해 결론이 나면 RAN2에 응답한다는 진행 방향을 기록한다. [RAN1 #125 Chair Note, R1-2603486 항목](#source-chair125). #126 Chair Note는 같은 의제의 후속 논의와 “No immediate RAN1 action”을 기록한다. [RAN1 #126 Chair Note, Fast-ARQ 항목](#source-chair126). 이 기록만으로 특정 회사 설계의 채택을 확인할 수는 없다.
 
 ## 1. 조사 범위와 배경
 
-RAN1 #125–#126에서 기존에 찾아 둔 Fast-ARQ / Fast ARQ 문서 8개의 로컬 원문과 읽을 수 있는 본문을 확인했다. 구성은 회사 contribution 7개와 RAN2의 수신 LS 1개다. #125 회사 문서는 6개이고 #126 회사 문서는 Samsung의 1개이므로, 두 회의 전체나 모든 조직의 논의를 대표하는 자료로 해석하지 않는다. 아래 Proposal·Observation·Conclusion은 원문에 나타난 제안·관찰·결론을 구분하는 표기다.
+조사 대상은 RAN1 #125–#126의 Fast-ARQ / Fast ARQ 관련 자료 중 원문을 내려받고 관련 본문을 확인한 TDoc 8개다. 파일이 저장되어 있다는 사실만으로 본문을 확인한 것으로 세지는 않는다. 구성은 회사 contribution 7개와 RAN2의 수신 LS 1개다. #125 회사 문서는 6개이고 #126 회사 문서는 Samsung의 1개이므로, 두 회의 전체나 모든 조직의 논의를 대표하는 자료로 해석하지 않는다. 아래 Proposal·Observation·Conclusion은 원문에 나타난 제안·관찰·결론을 구분하는 표기다.
+
+### 문서 선정 기준과 한계
+
+- **회의 범위:** RAN1 #125–#126에서 기존에 확보한 공식 문서 목록을 대상으로 했다.
+- **검색어:** `Fast-ARQ`와 `Fast ARQ`를 사용했다. 대소문자와 하이픈·공백 차이는 허용했으며, `HARQ` 전반이나 의미가 비슷한 용어로 확대하지 않았다.
+- **후보 발견:** 제목·초록·의제 설명에서 검색어가 확인되거나, 선택한 Chair Note에서 해당 검색어와 문서 번호의 연결이 확인되는 TDoc을 목록에 포함했다. Chair Note 연결은 같은 블록·표 행·제한된 논의 구간에 있는 명시적 참조를 사용했다.
+- **본문 사용:** 후보 문서의 읽을 수 있는 본문과 필요한 문맥을 확인해 기술 설명에 사용했다. 다운로드 여부만으로 내용을 확인했다고 간주하지 않았다.
+- **이번 목록:** 두 발견 경로를 합친 결과는 8개였다. 이 8개는 모두 제목에서도 검색어가 확인됐고, Chair Note 경로에서 추가된 별도 문서는 없었다. 중요도 순으로 상위 8개를 고르거나 문서 수를 8개로 제한한 결과가 아니다.
+
+**확인된 누락:** 이 선정 과정은 이미 확보한 모든 문서의 본문을 검색해 후보를 추가하지 않았다. MediaTek의 **R1-2603503**, *Discussion on HARQ related aspects in 6GR*에는 “Fast-ARQ Operation”과 “Uplink Fast-ARQ Operation” 절이 있지만 위 8개 목록에서 빠져 있다. 로컬 본문은 확인 가능하며, 이 문서의 기술 내용은 현재 보고서의 회사별 설명에 아직 반영하지 않았다. [로컬 원문 ZIP](/home/jjuns/3gpp-study-engine/data/raw/tdocs/ran1/125/R1-2603503/R1-2603503.zip), member: `R1-2603503 Discussion on HARQ related aspects in 6GR.docx`.
+
+따라서 이 8개를 해당 회의의 Fast-ARQ 관련 문서 전체로 해석하지 않는다. 본문에만 검색어가 나타나는 자료의 누락을 보완해야 한다.
+
+### 배경 LS
 
 배경 LS인 R1-2603486은 RAN2가 보낸 문서다. 이 LS는 UL에서 HARQ 재전송을 더 이상 시도하지 않지만 데이터 수신은 실패한 경우를 process failure로 설명한다. 해당 failure의 명시적 NACK indication을 받은 UE가 관련 데이터의 ARQ 재전송을 시작하도록 하는 방향을 제시하며, signaling 설계는 RAN1에 맡긴다. 메타데이터에 MediaTek도 표시되지만 원문 발신자는 RAN2이므로, 이 내용을 MediaTek 회사 제안으로 귀속하지 않는다. [RAN2, R1-2603486, “1 Overall description”](#source-r1-2603486).
 
@@ -43,6 +63,15 @@ RAN1 #125–#126에서 기존에 찾아 둔 Fast-ARQ / Fast ARQ 문서 8개의 �
 **Samsung — R1-2604142·R1-2605792, Observation 1–2.** 두 문서는 HARQ process failure가 “under typical conditions”에서는 드물다고 관찰한다. 또 failure 때 cross-cell ARQ 전송이 유익하다고 관찰한다. 앞 문단의 예시는 blockage 때문에 같은 cell에서의 HARQ 재전송이 제한되는 경우이며, 다른 cell의 더 나은 coverage를 ARQ에 사용할 가능성을 설명한다. [#125, §2.1 Observation 1–2](#source-r1-2604142), [#126, §2.1 Observation 1–2](#source-r1-2605792).
 
 ### 2.4 DL HARQ-ACK와 NACK-to-ACK 신뢰도는 어떻게 설계할 것인가?
+
+**먼저 오류 상황과 CRC 조건을 구분하면 다음과 같다.**
+
+- **어떤 오류인가?** DL 데이터를 성공적으로 받지 못한 UE가 NACK을 보냈는데, 기지국이 그 HARQ-ACK 피드백을 ACK으로 잘못 판정하는 상황이다. [OPPO, R1-2604096, “Discussion on DL fast ARQ (NACK-2-ACK error)”, 오류 설명 및 Figure 3 설명](#source-r1-2604096).
+- **왜 복구가 늦어지는가?** OPPO는 기지국이 성공한 것으로 판단해 HARQ buffer를 조기에 비우면 HARQ 재전송 대신 지연이 더 긴 RLC ARQ 재전송에 의존하게 되는 문제를 설명한다. [OPPO, R1-2604096, DL discussion의 NACK-to-ACK 영향 설명 및 Proposal 2 다음 분석](#source-r1-2604096).
+- **무엇에 CRC가 없다는 뜻인가?** Proposal 2의 조건은 UE가 보내는 **HARQ-ACK 피드백에 CRC가 없는 경우**이며, DL 데이터 자체에 CRC가 없다는 뜻이 아니다. [OPPO, R1-2604096, DL discussion의 CRC 유무별 설명 및 Proposal 2 후속 문장](#source-r1-2604096). 이 조건을 “CRC가 없으면 반드시 NACK-to-ACK 오류가 발생한다”거나 “CRC가 있으면 오류가 전혀 없다”는 인과관계로 해석하지 않는다.
+- **0.1%는 무엇의 기준인가?** OPPO가 CRC 없는 HARQ-ACK 전송에 대해 제안한 **NACK-to-ACK 오판정률의 상한**이다. [OPPO, R1-2604096, Proposal 2 후속 문장](#source-r1-2604096). 이미 측정으로 달성한 성능이나 확정된 6G 요구사항으로 제시한 수치가 아니다.
+
+이 절은 feedback 오류율을 낮추는 설계 질문을 다룬다. 다음 §2.5는 오류가 발생한 뒤 UE가 이를 검출하고 기지국에 보고할 필요가 있는지를 다룬다. OPPO는 오류율 목표에 따라 추가 보고의 필요성도 달라질 수 있다고 설명한다. [OPPO, R1-2604096, DL discussion의 Proposal 3 직전 분석](#source-r1-2604096).
 
 **vivo — R1-2603619, Proposal 3.** HARQ-ACK feedback의 주 목적을 HARQ 동작으로 두고, 5G NR의 신뢰도 요구사항을 6GR 보고 방식의 기준선으로 재사용할 수 있다고 제안한다. DL Fast-ARQ 문제를 위한 추가 개선은 HARQ 동작용 feedback 설계와 분리해 연구할 수 있다는 조건도 함께 둔다. [Discussion, Proposal 3](#source-r1-2603619).
 

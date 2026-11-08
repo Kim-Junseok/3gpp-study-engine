@@ -120,6 +120,24 @@ where they answer the question, with each channel clearly attributed. The
 three-channel authority rule does not require repeating three headings for every
 technical item.
 
+Prefer bullets for parallel findings, questions, alternatives, and company
+claims. If an introduction announces three questions, present exactly three
+question bullets. Use prose where a causal explanation benefits from connected
+sentences; do not hide an enumeration in a paragraph.
+
+Describe coverage with the meetings, source types, and counts actually inspected.
+Distinguish downloaded files from sources whose relevant content was read.
+Avoid using "current local documents" alone as the scope: storage location does
+not establish inspection or completeness. State Chair Note coverage separately
+from the TDoc count, and distinguish company contributions from LS documents.
+
+State the document-selection criteria in the report: meeting scope, literal
+terms and allowed formatting variants, discovery channels actually used,
+readability requirements, and any ranking or document-count limits. Distinguish
+metadata and Chair Note discovery from body-text search. Do not imply that all
+available bodies were searched if they were read only after candidate selection.
+Expose confirmed omissions and whether their technical content has been included.
+
 Use the requested language. Faithful Korean paraphrase may shorten or explain a
 source passage without changing its meaning. Preserve:
 
@@ -135,6 +153,15 @@ when explicitly present in the source. A parser's stored category is an audit
 fact; it must not overwrite a readable source's explicit label in ordinary
 prose. A label still carries only its document's authority. When no explicit
 label exists, describe the passage without inventing one.
+
+Keep the executive summary concise, but explain a compressed mechanism in its
+technical-item section. When the sources support it, identify the sender and
+receiver, what is transmitted or misinterpreted, and the consequence for the
+procedure. State which signal or data object a qualifier applies to and what
+error event a numerical target measures. Distinguish a condition from a cause,
+a proposed target from an achieved result, and error prevention from subsequent
+detection or recovery. Do not invent missing mechanisms to make an explanation
+appear complete; expose the missing detail instead.
 
 Compare source-backed mechanisms on the same technical dimension. For example,
 if one passage specifies a scheduling DCI and another specifies a dedicated DCI,
@@ -162,6 +189,14 @@ the official source and/or a validated local copy. If the local file is a ZIP,
 identify the real member filename; do not invent an extracted-file path. Where
 no section or page exists, identify the member and a short distinctive literal
 excerpt as the locator. Do not invent page numbers.
+
+Place each citation immediately after the sentence it supports, including in
+executive-summary bullets. Make the company, TDoc, and source locator visible
+at the claim. Do not collect sources for different claims at the end of a
+paragraph. Group citations only when they support the same stated claim with
+compatible qualifiers; shared subject matter alone is insufficient. Preserve
+each source's Proposal, Observation, or Conclusion label and authority when
+grouping citations.
 
 Encode spaces and literal `#` characters in Markdown link targets. Validate the
 URL-decoded path, so a Chair Note filename does not become a fragment identifier.
