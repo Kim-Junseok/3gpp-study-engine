@@ -1,0 +1,19 @@
+{
+  "python": "3.12.14",
+  "tested_versions": {
+    "fastapi": "0.129.2",
+    "starlette": "0.52.1",
+    "uvicorn": "0.54.0",
+    "Jinja2": "3.1.6",
+    "python-multipart": "0.0.33",
+    "httpx": "0.28.1",
+    "duckdb": "1.5.6",
+    "pydantic": "2.14.3",
+    "pytest": "8.4.2",
+    "playwright": "1.64.1",
+    "anyio": "4.16.0"
+  },
+  "source_baseline": "566d16845f540ce84b21587ef75a20e4d5f32ea8",
+  "model_enabled": false,
+  "actual_corpus_provided": false
+}

@@ -1,0 +1,134 @@
+{
+  "fixture_only": true,
+  "stage_b_accepted": false,
+  "screens": [
+    {
+      "width": 360,
+      "page": "home",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "scope",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "task",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "report",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "followup",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "empty",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 360,
+      "page": "empty-scope",
+      "scrollWidth": 360,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "home",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "scope",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "task",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "report",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "followup",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "empty",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 390,
+      "page": "empty-scope",
+      "scrollWidth": 390,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "home",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "scope",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "task",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "report",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "followup",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "empty",
+      "scrollWidth": 1440,
+      "undersized": []
+    },
+    {
+      "width": 1440,
+      "page": "empty-scope",
+      "scrollWidth": 1440,
+      "undersized": []
+    }
+  ],
+  "external_browser_requests": [],
+  "console_errors": []
+}
