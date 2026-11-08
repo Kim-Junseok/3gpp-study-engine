@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="panel error-page"><span class="work-status-icon is-warning" aria-hidden="true">!</span><p class="eyebrow">PLEASE CHECK</p><h1>{{ error_title|default('요청을 처리할 수 없습니다.') }}</h1><p class="lede">{{ error_detail|default('주소나 접속 상태를 확인한 뒤 다시 시도하세요.') }}</p><a class="button button-primary" href="/">연구 노트로 돌아가기 <span aria-hidden="true">→</span></a></section>
+{% endblock %}

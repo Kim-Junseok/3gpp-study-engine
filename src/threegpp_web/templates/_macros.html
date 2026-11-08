@@ -1,0 +1,51 @@
+{% macro status_badge(status) -%}
+{% set labels = {'draft':'범위 확인 전','scope_saved':'범위 확인 중','scope_ready':'범위 승인 대기','scope_limit':'범위 축소 필요','awaiting_approval':'승인 대기','approved':'범위 승인됨','queued':'실행 대기','running':'진행 중','needs_data':'자료 필요','blocked':'확인 필요','failed':'실패','interrupted':'중단됨','sources_ready':'원문 검토 준비됨','model_disabled':'모델 연결 대기','completed':'결과 준비됨','complete':'결과 준비됨','succeeded':'결과 준비됨'} %}
+<span class="badge badge-{{ status|default('draft') }}">{{ labels.get(status, '상태 확인') }}</span>
+{%- endmacro %}
+
+{% macro steps(current) -%}
+<ol class="workflow" aria-label="조사 순서">
+  {% for label in ['질문 입력', '범위 확인', '작업 진행', '결과 검토'] %}
+  <li class="{% if loop.index < current %}is-done{% elif loop.index == current %}is-current{% endif %}" {% if loop.index == current %}aria-current="step"{% endif %}><span class="step-number" aria-hidden="true">{% if loop.index < current %}✓{% else %}{{ loop.index }}{% endif %}</span><span>{{ label }}</span></li>
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
+{% macro source_links(source) -%}
+{% set links = source.get('source', {}) %}
+<div class="source-links">
+  {% set raw = links.get('raw_url') or links.get('raw_asset') or links.get('raw_local') or source.get('raw_url') %}
+  {% set normalized = links.get('normalized_url') or links.get('normalized_asset') or links.get('normalized_local') or source.get('normalized_url') %}
+  {% set official = links.get('official_url') or source.get('official_url') %}
+  {% if raw and raw.startswith('/sources/') %}<a href="{{ raw }}" class="text-link">원문 파일 <span aria-hidden="true">↗</span></a>{% endif %}
+  {% if normalized and normalized.startswith('/sources/') %}<a href="{{ normalized }}" class="text-link">정규화 자료 <span aria-hidden="true">↗</span></a>{% endif %}
+  {% if official and official.startswith('https://') %}<a href="{{ official }}" class="text-link" target="_blank" rel="noopener noreferrer">공식 출처 <span aria-hidden="true">↗</span><span class="sr-only"> 새 창</span></a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro source_section(sources, channel, subtitle, empty_message) -%}
+<section class="source-channel" aria-labelledby="channel-{{ channel }}">
+  <div class="section-heading"><div><p class="eyebrow">{{ subtitle }}</p><h2 id="channel-{{ channel }}">{{ {'contribution':'회사 기고','discussion':'회의 논의','outcome':'공식 회의 결과'}.get(channel, '출처') }}</h2></div><span class="count-label">{{ sources|length }}개 출처</span></div>
+  {% for source in sources %}
+  <article class="source-card"{% if source.get('key') %} id="{{ source.key }}"{% endif %}>
+    <div class="source-card-header"><div><h3>{{ source.get('tdoc') or source.get('selected_chair_note') or '선택한 Chair Note' }}</h3>{% if source.get('title') %}<p>{{ source.title }}</p>{% endif %}</div></div>
+    <div class="source-metadata">{% if source.get('organizations') %}<span>{{ source.organizations|join(', ') }}</span>{% endif %}{% if source.get('authority_meeting') %}<span>결과의 기준 회의 #{{ source.authority_meeting }}</span>{% if source.get('discovery_meeting') and source.discovery_meeting != source.authority_meeting %}<span>자료 발견 회의 #{{ source.discovery_meeting }}</span>{% endif %}{% elif source.get('meeting') %}<span>회의 #{{ source.meeting }}</span>{% endif %}</div>
+    {{ source_links(source) }}
+    {% for passage in source.get('passages', []) %}
+    <details class="passage" {% if loop.first %}open{% endif %}>
+      <summary><span>{{ passage.get('human_locator') or passage.get('locator') or passage.get('source_native_label') or '읽은 구절' }}</span><span class="disclosure-icon" aria-hidden="true">＋</span></summary>
+      <div class="passage-body">
+        {% if passage.get('source_native_label') %}<span class="source-label">{{ passage.source_native_label }}</span>{% endif %}
+        <blockquote>{{ passage.get('literal_text', '') }}</blockquote>
+        {% if passage.get('characters_omitted', 0) %}<p class="inline-warning">이 구절에서 {{ passage.characters_omitted }}자가 생략되었습니다.</p>{% endif %}
+        {% if passage.get('surrounding_context') %}
+        <div class="source-context"><p class="caption">함께 읽은 문맥</p>{% for context in passage.surrounding_context %}<p>{{ context.get('literal_text', '') }}</p>{% if context.get('characters_omitted', 0) %}<p class="inline-warning">문맥 일부가 생략되었습니다.</p>{% endif %}{% endfor %}</div>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+    {% if source.get('passages_omitted', 0) %}<p class="inline-warning">운영 한도로 {{ source.passages_omitted }}개 구절이 표시되지 않았습니다. 전체 내용을 읽었다고 볼 수 없습니다.</p>{% endif %}
+  </article>
+  {% else %}<div class="empty-channel"><span class="empty-dash" aria-hidden="true">—</span><p>{{ empty_message }}</p></div>{% endfor %}
+</section>
+{%- endmacro %}

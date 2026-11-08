@@ -12,6 +12,11 @@ Build a general, provenance-first system for studying 3GPP RAN meeting material.
 
 ## Research-facing 3GPP study vocabulary
 
+The canonical technical writing guide is `$CODEX_HOME/TECHNICAL_WRITING_STYLE.md`.
+Record whether it was actually supplied and read. The report guide and vocabulary
+below are separate instructions, not substitutes. If the canonical file is absent,
+continue independent implementation and record prose acceptance as pending.
+
 For user-facing 3GPP study output, follow `docs/STUDY_VOCABULARY.md`.
 Route ordinary technical explanations, company-contribution summaries, and
 research reports through `docs/RESEARCH_REPORT_GUIDE.md`. A source passage is
